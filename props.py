@@ -87,6 +87,7 @@ class EL_Stack(bpy.types.PropertyGroup):
     next_uid: IntProperty(default=1)
     is_recording: BoolProperty(default=False)
     is_comparing: BoolProperty(default=False)
+    is_dirty: BoolProperty(default=False, get=lambda self: _is_dirty(bpy.context.object))
     # UID of the layer being recorded (0 = new layer)
     recording_uid: IntProperty(default=0)
     base_mesh: PointerProperty(type=bpy.types.Mesh)
