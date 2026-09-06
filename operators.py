@@ -789,6 +789,7 @@ class EL_OT_compare(bpy.types.Operator):
             return {"CANCELLED"}
         obj = context.object
         stack = obj.edit_layers
+        stack.is_comparing = True
         _clear_compares(obj)
 
         offset = max(obj.dimensions.x * 1.5, 2.0)
@@ -841,6 +842,7 @@ class EL_OT_compare_clear(bpy.types.Operator):
         return _poll_mesh_object(context)
 
     def execute(self, context):
+        context.object.edit_layers.is_comparing = False
         removed, released = _clear_compares(context.object)
         msg = _T("Removed {count} comparison objects").format(count=removed)
         if released:
