@@ -269,7 +269,7 @@ def _find_face(vmap, idl, ids):
     return None
 
 
-def _apply_layer(bm, idl, data, warnings, layer_name):
+def _apply_layer(bm, idl, data, warnings, layer):
     """Apply one layer's diff to the bmesh
 
     Deletions whose target is missing are skipped silently (it just means an
@@ -327,9 +327,12 @@ def _apply_layer(bm, idl, data, warnings, layer_name):
     for i, d in data.get("moved", {}).items():
         v = vmap.get(int(i))
         if v is None or not v.is_valid:
-            warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer_name, i=i))
+            warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
-        v.co += Vector(d)
+        if layer.has_mix_slider:
+            v.co += Vector(d) * layer.mix_factor
+        else:
+            v.co += Vector(d)
 
     # 5. New vertices (JSON keys are strings, convert back to int)
     # With anchor data, restore the position as "anchor centroid + offset" so
@@ -358,7 +361,7 @@ def _apply_layer(bm, idl, data, warnings, layer_name):
     for a, b in data.get("new_edges", []):
         va, vb = vmap.get(a), vmap.get(b)
         if not (va and vb and va.is_valid and vb.is_valid):
-            warnings.append(_T("{layer}: missing vertices for edge ({a}, {b})").format(layer=layer_name, a=a, b=b))
+            warnings.append(_T("{layer}: missing vertices for edge ({a}, {b})").format(layer=layer.name, a=a, b=b))
             continue
         if bm.edges.get((va, vb)) is None:
             bm.edges.new((va, vb))
@@ -367,14 +370,14 @@ def _apply_layer(bm, idl, data, warnings, layer_name):
     for ids in data.get("new_faces", []):
         vs = [vmap.get(i) for i in ids]
         if any(v is None or not v.is_valid for v in vs):
-            warnings.append(_T("{layer}: missing vertices for face {ids}").format(layer=layer_name, ids=ids))
+            warnings.append(_T("{layer}: missing vertices for face {ids}").format(layer=layer.name, ids=ids))
             continue
         if bm.faces.get(vs):
             continue
         try:
             bm.faces.new(vs)
         except ValueError:
-            warnings.append(_T("{layer}: cannot create face {ids}").format(layer=layer_name, ids=ids))
+            warnings.append(_T("{layer}: cannot create face {ids}").format(layer=layer.name, ids=ids))
 
     # 8. Attributes (material / smooth / seam / sharp / crease / bevel weight)
     # Missing targets just mean an upstream change removed them, so skip silently

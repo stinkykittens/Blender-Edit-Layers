@@ -131,7 +131,7 @@ def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None
             # Applying attributes may add vertex layers, which invalidates
             # existing layer handles, so re-fetch the ID layer every iteration
             idl = _ensure_id_layer(bm)
-            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer.name)
+            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer)
             applied.append(layer.uid)
         bm.normal_update()
         bm.to_mesh(mesh)

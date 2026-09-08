@@ -191,7 +191,7 @@ class EL_OT_record_edit(bpy.types.Operator):
         # Start editing from the state with the target layer itself applied
         warnings = []
         if layer.data:
-            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer.name)
+            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer)
         bm.normal_update()
         bm.to_mesh(obj.data)
         bm.free()
@@ -588,14 +588,12 @@ class EL_OT_layer_merge_down(bpy.types.Operator):
             for l in path[: pos - 1]:
                 if l.data:
                     _apply_layer(
-                        bm, _ensure_id_layer(bm), json.loads(l.data), warnings, l.name
-                    )
+                        bm, _ensure_id_layer(bm), json.loads(l.data), warnings, l)
             pre = _take_snapshot(bm, _ensure_id_layer(bm))
             for l in (parent, layer):
                 if l.data:
                     _apply_layer(
-                        bm, _ensure_id_layer(bm), json.loads(l.data), warnings, l.name
-                    )
+                        bm, _ensure_id_layer(bm), json.loads(l.data), warnings, l)
             post = _take_snapshot(bm, _ensure_id_layer(bm))
         finally:
             bm.free()

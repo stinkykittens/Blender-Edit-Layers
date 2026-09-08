@@ -104,6 +104,8 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layout = self.layout
         layout.operator(EL_OT_layer_merge_down.bl_idname, icon="TRIA_UP_BAR")
         layout.operator(EL_OT_bake_upto.bl_idname, icon="IMPORT")
+        layout.prop(context.object.edit_layers.layers[context.object.edit_layers.active_index], "has_mix_slider", icon="CENTER_ONLY")
+
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
 
@@ -145,6 +147,13 @@ class EL_UL_layers(bpy.types.UIList):
                     sub.label(text=f"← {stack.branches[div[0]].name}")
                 else:
                     sub.label(text=_T("← {count} branches").format(count=len(div)))
+        if item.has_mix_slider:
+            row.prop(
+                item,
+                "mix_factor",
+                text="mix",
+                emboss=False,
+            )
         row.prop(
             item,
             "enabled",
