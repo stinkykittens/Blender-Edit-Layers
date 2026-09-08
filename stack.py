@@ -5,6 +5,8 @@ import json
 import bpy
 import bmesh
 
+from bpy import (types)
+
 from .common import (
     COMPARE_PROP,
     ID_ATTR,
@@ -106,14 +108,16 @@ def _branch_layer_stats(stack, branch_index):
     return len(mine) - own, own
 
 
-def _rebuild_mesh(stack, path, mesh, respect_enabled=True, upto=None):
+def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None):
     """Apply the layers of path in order onto a copy of the base mesh, write to mesh
 
     Returns (warnings, list of layer uids actually applied).
     """
+    
     warnings = []
     applied = []
     bm = bmesh.new()
+    
     try:
         bm.from_mesh(stack.base_mesh)
         _ensure_id_layer(bm)
@@ -135,6 +139,7 @@ def _rebuild_mesh(stack, path, mesh, respect_enabled=True, upto=None):
         bm.free()
     mesh.update()
     return warnings, applied
+
 
 
 def _fingerprint(mesh):
@@ -160,8 +165,17 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj, upto=None, respect_enabled=True, branch_index=None):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None):
     """Rebuild the object from the active (or given) branch"""
+
+    if bpy.context.object.mode == "EDIT":
+        return []
+
+    # Get origiginal mesh so otherwise lost data e.g. vertex groups get recover
+    source_obj = obj.copy()
+    source_obj.data = obj.data.copy()
+    bpy.context.collection.objects.link(source_obj)
+    
     stack = obj.edit_layers
     path = _branch_path(stack, branch_index)
     warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto)
@@ -172,7 +186,23 @@ def _rebuild(obj, upto=None, respect_enabled=True, branch_index=None):
         "uids": applied,
         "branch": stack.active_branch if branch_index is None else branch_index,
     }
+    _transfer_mesh_data(obj, source_obj)
     return warnings
+
+
+def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
+    modifier: types.DataTransferModifier = obj.modifiers.new('_DATA_TRANSFER', 'DATA_TRANSFER')
+    modifier.object = source_obj
+    modifier.use_vert_data = True
+    modifier.use_loop_data = True
+    modifier.data_types_verts = { 'VGROUP_WEIGHTS' }
+    modifier.data_types_loops = { 'COLOR_CORNER', 'UV' } # 'CUSTOM_NORMAL' might be desired to include
+    # Apply the modifier
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.datalayout_transfer(modifier = modifier.name)
+    bpy.ops.object.modifier_apply(modifier = modifier.name)
+    obj.data.update()
+    bpy.data.objects.remove(source_obj, do_unlink=True)
 
 
 def _safe_rebuild(obj):
