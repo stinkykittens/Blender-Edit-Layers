@@ -168,7 +168,7 @@ def _fingerprint(mesh):
 def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None):
     """Rebuild the object from the active (or given) branch"""
     
-    if not _poll_stack_idle():
+    if bpy.context.object.mode == "EDIT":
         return []
 
     stack = obj.edit_layers
@@ -204,7 +204,7 @@ def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
     modifier.use_loop_data = True
     modifier.data_types_verts = { 'VGROUP_WEIGHTS' }
     modifier.data_types_loops = { 'COLOR_CORNER', 'UV' } # 'CUSTOM_NORMAL' might be desired to include
-    if br.data_transfer_mode == "TOPOLOGY":
+    if _active_branch_has_data_obj(obj) and br.data_transfer_mode == "TOPOLOGY":
         modifier.vert_mapping = "TOPOLOGY"
         modifier.loop_mapping = "TOPOLOGY"
     # Apply the modifier

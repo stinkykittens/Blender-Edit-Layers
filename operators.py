@@ -873,7 +873,7 @@ class EL_OT_rebuild(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _poll_stack_idle(context)
+        return _poll_stack_idle(context) and context.mode != "EDIT_MESH"
 
     def execute(self, context):
         if _guard_shape_keys(self, context):

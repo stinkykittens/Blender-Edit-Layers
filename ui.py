@@ -304,12 +304,13 @@ class EL_PT_panel(bpy.types.Panel):
                 "EL_UL_branches", "", stack, "branches", stack, "active_branch", rows=2
             )
             side = row.column(align=True)
-            side.scale_x = 0.5
             side.enabled = not stack.is_recording
             side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
             side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
             side.separator()
-            side.props_enum(stack.branches[stack.active_branch], "data_transfer_mode")
+            if _active_branch_has_data_obj(obj):
+                side.scale_x = 0.4
+                side.props_enum(stack.branches[stack.active_branch], "data_transfer_mode")
             side.operator(EL_OT_set_branch_data.bl_idname, text="", icon="MOD_DATA_TRANSFER")
             if len(stack.branches) > 1 and not stack.is_recording:
                 sub = col.row(align=True)
