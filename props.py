@@ -76,6 +76,7 @@ class EL_Branch(bpy.types.PropertyGroup):
         max=1.0,
         default=(0.7, 0.7, 0.7),
     )
+    data_obj: StringProperty(name="Data Object", default="")
 
 
 class EL_Stack(bpy.types.PropertyGroup):

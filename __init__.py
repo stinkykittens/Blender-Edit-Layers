@@ -37,6 +37,7 @@ classes = (
     operators.EL_OT_branch_remove,
     operators.EL_OT_compare,
     operators.EL_OT_compare_clear,
+    operators.EL_OT_set_branch_data,
     operators.EL_OT_notice_clear,
     operators.EL_OT_rebuild,
     operators.EL_OT_detach,

@@ -967,3 +967,32 @@ class EL_OT_bake(bpy.types.Operator):
         _blocked_notice.pop(obj.name, None)
         self.report({"INFO"}, _T("Baked and removed the stack"))
         return {"FINISHED"}
+
+class EL_OT_set_branch_data(bpy.types.Operator):
+    """Merge the selected layer into the previous (upper) layer"""
+
+    bl_idname = "edit_layers.set_branch_data"
+    bl_label = "Set Branch Data"
+    bl_options = {"REGISTER", "UNDO"}
+    bl_description = "Set a data object for the current branch to preserve Vertex Groups/Weights/Colors and Uvs accurately."
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context)
+
+    def execute(self, context):
+        stack = context.object.edit_layers
+        br = stack.branches[stack.active_branch]
+
+        if br.data_obj != "" and any(c.name == br.data_obj for c in context.object.children):
+            bpy.data.objects.remove(next((c for c in context.object.children if c.name == br.data_obj), None), do_unlink=True)
+        
+        data_obj = context.object.copy()
+        data_obj.data = context.object.data.copy()
+        data_obj.name = br.name + "_Data"
+        bpy.context.collection.objects.link(data_obj)
+        data_obj.parent = context.object
+        data_obj.hide_viewport = True
+        data_obj.hide_render = True
+        br.data_obj = data_obj.name
+        return {"FINISHED"}

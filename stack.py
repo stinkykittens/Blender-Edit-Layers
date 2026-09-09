@@ -171,12 +171,18 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
     if bpy.context.object.mode == "EDIT":
         return []
 
-    # Get origiginal mesh so otherwise lost data e.g. vertex groups get recover
-    source_obj = obj.copy()
-    source_obj.data = obj.data.copy()
-    bpy.context.collection.objects.link(source_obj)
-    
     stack = obj.edit_layers
+    
+    # Get origiginal mesh or data object so otherwise lost data e.g. vertex groups get recover
+    data_obj = stack.branches[stack.active_branch].data_obj
+    if data_obj != "" and any(c.name == data_obj for c in obj.children):
+        source_obj = next((c for c in obj.children if c.name == data_obj), None)
+    else:
+        data_obj = ""
+        source_obj = obj.copy()
+        source_obj.data = obj.data.copy()
+        bpy.context.collection.objects.link(source_obj)
+    
     path = _branch_path(stack, branch_index)
     warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
@@ -187,6 +193,8 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         "branch": stack.active_branch if branch_index is None else branch_index,
     }
     _transfer_mesh_data(obj, source_obj)
+    if data_obj == "":
+        bpy.data.objects.remove(source_obj, do_unlink=True)
     return warnings
 
 
@@ -202,7 +210,6 @@ def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
     bpy.ops.object.datalayout_transfer(modifier = modifier.name)
     bpy.ops.object.modifier_apply(modifier = modifier.name)
     obj.data.update()
-    bpy.data.objects.remove(source_obj, do_unlink=True)
 
 
 def _safe_rebuild(obj):
