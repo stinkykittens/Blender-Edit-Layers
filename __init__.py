@@ -35,6 +35,7 @@ classes = (
     operators.EL_OT_layer_merge_down,
     operators.EL_OT_bake_upto,
     ui.EL_MT_layer_menu,
+    ui.EL_MT_bake_menu,
     operators.EL_OT_branch_create,
     operators.EL_OT_branch_remove,
     operators.EL_OT_compare,
@@ -44,6 +45,7 @@ classes = (
     operators.EL_OT_rebuild,
     operators.EL_OT_detach,
     operators.EL_OT_bake,
+    operators.EL_OT_bake_with_shape_keys,
     ui.EL_UL_layers,
     ui.EL_UL_branches,
     ui.EL_PT_panel,
@@ -59,8 +61,8 @@ def register():
     for cls in classes:
         bpy.utils.register_class(cls)
     bpy.types.Object.edit_layers = PointerProperty(type=props.EL_Stack)
-    if handlers._el_depsgraph_handler not in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.append(handlers._el_depsgraph_handler)
+    # if handlers._el_depsgraph_handler not in bpy.app.handlers.depsgraph_update_post:
+    #     bpy.app.handlers.depsgraph_update_post.append(handlers._el_depsgraph_handler)
     if handlers._el_load_post not in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.append(handlers._el_load_post)
     ui.register_draw_handler()
@@ -78,8 +80,8 @@ def unregister():
         bpy.app.translations.unregister(__name__)
     except Exception:
         pass
-    if handlers._el_depsgraph_handler in bpy.app.handlers.depsgraph_update_post:
-        bpy.app.handlers.depsgraph_update_post.remove(handlers._el_depsgraph_handler)
+    # if handlers._el_depsgraph_handler in bpy.app.handlers.depsgraph_update_post:
+    #     bpy.app.handlers.depsgraph_update_post.remove(handlers._el_depsgraph_handler)
     if handlers._el_load_post in bpy.app.handlers.load_post:
         bpy.app.handlers.load_post.remove(handlers._el_load_post)
     del bpy.types.Object.edit_layers

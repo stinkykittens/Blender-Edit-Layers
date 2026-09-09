@@ -165,7 +165,7 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, animation=False):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True):
     """Rebuild the object from the active (or given) branch"""
 
     if bpy.context.object.mode == "EDIT":
@@ -173,7 +173,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
 
     stack = obj.edit_layers
 
-    if not animation:
+    if transfer_data:
         # Get origiginal mesh or data object so otherwise lost data e.g. vertex groups get recover
         if _active_branch_has_data_obj(obj):
             source_obj = next((c for c in obj.children if c.name == stack.branches[stack.active_branch].data_obj), None)
@@ -191,10 +191,12 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         "uids": applied,
         "branch": stack.active_branch if branch_index is None else branch_index,
     }
-    if not animation:
+    if transfer_data:
         _transfer_mesh_data(obj, source_obj)
         if not _active_branch_has_data_obj(obj):
+            mesh = source_obj.data
             bpy.data.objects.remove(source_obj, do_unlink=True)
+            bpy.data.meshes.remove(mesh)
     return warnings
 
 
@@ -376,6 +378,4 @@ def _active_branch_has_data_obj(obj) -> bool:
     if br.data_obj != "":
         if any(c.name == br.data_obj for c in obj.children):
             return True
-        else:
-            br.data_obj = ""
     return False

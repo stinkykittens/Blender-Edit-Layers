@@ -8,6 +8,7 @@ from .operators import (
     EL_OT_adopt,
     EL_OT_bake,
     EL_OT_bake_upto,
+    EL_OT_bake_with_shape_keys,
     EL_OT_set_branch_data,
     EL_OT_branch_create,
     EL_OT_branch_remove,
@@ -209,6 +210,15 @@ class EL_UL_branches(bpy.types.UIList):
         else:
             sub.label(text=_T("{count} layers").format(count=len(_branch_path(stack, index))))
 
+class EL_MT_bake_menu(bpy.types.Menu):
+    bl_label = "Bake"
+    def draw(self, context):
+        layout = self.layout
+        layout.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
+        layout.operator(EL_OT_bake_with_shape_keys.bl_idname, text="Bake With Shape Keys", icon="IMPORT")
+        layout.operator(EL_OT_bake.bl_idname, text="Bake To Copy", icon="EXPORT")
+        layout.operator(EL_OT_bake.bl_idname, text="Bake To Copy With Shape Keys", icon="EXPORT")
+
 
 class EL_PT_panel(bpy.types.Panel):
     bl_label = "Edit Layers"
@@ -349,7 +359,7 @@ class EL_PT_panel(bpy.types.Panel):
             layout.operator(EL_OT_record_edit.bl_idname, icon="EDITMODE_HLT")
             row = layout.row(align=True)
             row.operator(EL_OT_rebuild.bl_idname, icon="FILE_REFRESH")
-            row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
+            row.menu("EL_MT_bake_menu", icon="IMPORT")
             row.operator("wm.url_open", text="", icon="HELP").url = HELP_URL
             row = layout.row(align=True)
             row.prop(stack, "enable_animation", icon="ACTION")
