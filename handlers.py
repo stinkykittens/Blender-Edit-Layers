@@ -63,6 +63,7 @@ def _el_load_post(_dummy):
     _rescan_no_keys()
     bpy.app.handlers.frame_change_post.append(_animation_update)
     bpy.app.handlers.animation_playback_post(_animation_end)
+    bpy.app.handlers.animation_playback_pre(_animation_start)
 
 def _animation_update(scene, depsgraph):
     obj = bpy.context.object
@@ -70,6 +71,11 @@ def _animation_update(scene, depsgraph):
         _rebuild(obj, animation=True)
 
 def _animation_end(scene, depsgraph):
+    obj = bpy.context.object
+    if obj.edit_layers.enable_animation and obj.type == "MESH" and obj.edit_layers.initialized:
+        _rebuild(obj)
+
+def _animation_start(scene, depsgraph):
     obj = bpy.context.object
     if obj.edit_layers.enable_animation and obj.type == "MESH" and obj.edit_layers.initialized:
         _rebuild(obj)

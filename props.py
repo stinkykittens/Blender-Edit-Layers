@@ -111,4 +111,4 @@ class EL_Stack(bpy.types.PropertyGroup):
         update=lambda self, context: _tag_redraw_view3d(context),
     )
     enable_animation: BoolProperty(default=False, name="Animation Enabled")
-    frame_skip: IntProperty(default=1, min=0, max=10, name="Frame Skip", description="Animation Playback would rebuild the mesh on every single frame, use this to optimize performance.\n0 means no frames get skipped, 1 means every second frame gets skipped...")
+    frame_skip: IntProperty(default=1, min=0, max=10, name="Frame Skip", description="Animation Playback would rebuild the mesh on every single frame, use this to optimize performance.\n0 means no frames get skipped, 1 means every second frame get skipped...")
