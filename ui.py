@@ -351,6 +351,9 @@ class EL_PT_panel(bpy.types.Panel):
             row.operator(EL_OT_rebuild.bl_idname, icon="FILE_REFRESH")
             row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
             row.operator("wm.url_open", text="", icon="HELP").url = HELP_URL
+            row = layout.row(align=True)
+            row.prop(stack, "enable_animation", icon="ACTION")
+            row.prop(stack, "frame_skip", slider=True)
             layout.label(text="Unrecorded edits are detected and can be adopted", icon="INFO")
 
         warnings = _last_warnings.get(obj.name)

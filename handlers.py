@@ -12,6 +12,7 @@ from .common import (
     _recording,
 )
 
+from .stack import _rebuild
 
 def _rescan_no_keys():
     """Register stack objects currently without shape keys into the confirmed set"""
@@ -60,3 +61,15 @@ def _el_load_post(_dummy):
     _no_key_confirmed.clear()
     _blocked_notice.clear()
     _rescan_no_keys()
+    bpy.app.handlers.frame_change_post.append(_animation_update)
+    bpy.app.handlers.animation_playback_post(_animation_end)
+
+def _animation_update(scene, depsgraph):
+    obj = bpy.context.object
+    if obj.edit_layers.enable_animation and obj.edit_layers.initialized and obj.type == "MESH" and scene.frame_current % (obj.edit_layers.frame_skip + 1) == 0:
+        _rebuild(obj, animation=True)
+
+def _animation_end(scene, depsgraph):
+    obj = bpy.context.object
+    if obj.edit_layers.enable_animation and obj.type == "MESH" and obj.edit_layers.initialized:
+        _rebuild(obj)

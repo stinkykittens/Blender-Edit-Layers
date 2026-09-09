@@ -18,6 +18,8 @@ from bpy.props import PointerProperty
 
 from . import handlers, i18n, operators, props, ui
 
+from .stack import _rebuild
+
 classes = (
     props.EL_Layer,
     props.EL_Branch,
@@ -69,6 +71,7 @@ def register():
         pass
 
 
+
 def unregister():
     ui.unregister_draw_handler()
     try:
@@ -82,3 +85,4 @@ def unregister():
     del bpy.types.Object.edit_layers
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+
