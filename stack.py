@@ -167,18 +167,16 @@ def _fingerprint(mesh):
 
 def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None):
     """Rebuild the object from the active (or given) branch"""
-
-    if bpy.context.object.mode == "EDIT":
+    
+    if not _poll_stack_idle():
         return []
 
     stack = obj.edit_layers
     
     # Get origiginal mesh or data object so otherwise lost data e.g. vertex groups get recover
-    data_obj = stack.branches[stack.active_branch].data_obj
-    if data_obj != "" and any(c.name == data_obj for c in obj.children):
-        source_obj = next((c for c in obj.children if c.name == data_obj), None)
+    if _active_branch_has_data_obj(obj):
+        source_obj = next((c for c in obj.children if c.name == stack.branches[stack.active_branch].data_obj), None)
     else:
-        data_obj = ""
         source_obj = obj.copy()
         source_obj.data = obj.data.copy()
         bpy.context.collection.objects.link(source_obj)
@@ -193,18 +191,22 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         "branch": stack.active_branch if branch_index is None else branch_index,
     }
     _transfer_mesh_data(obj, source_obj)
-    if data_obj == "":
+    if not _active_branch_has_data_obj(obj):
         bpy.data.objects.remove(source_obj, do_unlink=True)
     return warnings
 
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
+    br = obj.edit_layers.branches[obj.edit_layers.active_branch]
     modifier: types.DataTransferModifier = obj.modifiers.new('_DATA_TRANSFER', 'DATA_TRANSFER')
     modifier.object = source_obj
     modifier.use_vert_data = True
     modifier.use_loop_data = True
     modifier.data_types_verts = { 'VGROUP_WEIGHTS' }
     modifier.data_types_loops = { 'COLOR_CORNER', 'UV' } # 'CUSTOM_NORMAL' might be desired to include
+    if br.data_transfer_mode == "TOPOLOGY":
+        modifier.vert_mapping = "TOPOLOGY"
+        modifier.loop_mapping = "TOPOLOGY"
     # Apply the modifier
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.datalayout_transfer(modifier = modifier.name)
@@ -366,3 +368,12 @@ def _clear_compares(obj):
             del other[COMPARE_PROP]
             released += 1
     return removed, released
+
+def _active_branch_has_data_obj(obj) -> bool:
+    br = obj.edit_layers.branches[obj.edit_layers.active_branch]
+    if br.data_obj != "":
+        if any(c.name == br.data_obj for c in obj.children):
+            return True
+        else:
+            br.data_obj = ""
+    return False

@@ -26,6 +26,7 @@ from .operators import (
     EL_OT_stack_init,
 )
 from .stack import (
+    _active_branch_has_data_obj,
     _branch_layer_stats,
     _branch_path,
     _divergence_map,
@@ -106,7 +107,7 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layout.operator(EL_OT_layer_merge_down.bl_idname, icon="TRIA_UP_BAR")
         layout.operator(EL_OT_bake_upto.bl_idname, icon="IMPORT")
         layout.prop(context.object.edit_layers.layers[context.object.edit_layers.active_index], "has_mix_slider", icon="CENTER_ONLY")
-        
+
 
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
@@ -303,10 +304,13 @@ class EL_PT_panel(bpy.types.Panel):
                 "EL_UL_branches", "", stack, "branches", stack, "active_branch", rows=2
             )
             side = row.column(align=True)
+            side.scale_x = 0.5
             side.enabled = not stack.is_recording
-            side.operator(EL_OT_set_branch_data.bl_idname, text="", icon="MESH_DATA")
             side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
             side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
+            side.separator()
+            side.props_enum(stack.branches[stack.active_branch], "data_transfer_mode")
+            side.operator(EL_OT_set_branch_data.bl_idname, text="", icon="MOD_DATA_TRANSFER")
             if len(stack.branches) > 1 and not stack.is_recording:
                 sub = col.row(align=True)
                 sub.operator(

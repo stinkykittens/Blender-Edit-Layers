@@ -9,6 +9,7 @@ from bpy.props import (
     IntProperty,
     PointerProperty,
     StringProperty,
+    EnumProperty
 )
 
 from .stack import _has_shape_keys, _is_dirty, _rebuild
@@ -77,6 +78,11 @@ class EL_Branch(bpy.types.PropertyGroup):
         default=(0.7, 0.7, 0.7),
     )
     data_obj: StringProperty(name="Data Object", default="")
+    data_transfer_mode: EnumProperty(name="Data Transfer Mode", 
+        description="Set mapping mode for data transfer.",
+        items=[("NEAREST", "Nearest", "Set Data Transfer Mode.\nDefault behaviour."),
+        ("TOPOLOGY", "Topology", "Set Data Transfer Mode.\nUseful when topology stays unchanged e.g. for sculpting.")],
+        default="NEAREST")
 
 
 class EL_Stack(bpy.types.PropertyGroup):
