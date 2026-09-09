@@ -1006,10 +1006,7 @@ class EL_OT_bake_with_shape_keys(bpy.types.Operator):
         for i, v in enumerate(mix_values):
             tmp = obj.copy()
             tmp.data = tmp.data.copy()
-            mix = 1
-            if v < 0 or v > 1:
-                mix = v
-            tmp.edit_layers.layers[mix_indexes[i]].mix_factor = mix
+            tmp.edit_layers.layers[mix_indexes[i]].mix_factor = 1
             _rebuild(tmp, transfer_data=False)
             shape_copies.append(tmp)
 
@@ -1019,6 +1016,10 @@ class EL_OT_bake_with_shape_keys(bpy.types.Operator):
             key = obj.shape_key_add(name=obj.edit_layers.layers[mix_indexes[i]].name)
             for idx, vertex in enumerate(copy.data.vertices):
                 key.data[idx].co = vertex.co
+            if mix_values[i] < 0:
+                key.slider_min = mix_values[i]
+            elif mix_values[i] > 1:
+                key.slider_max = mix_values[i]
             key.value = mix_values[i]
             mesh = copy.data
             bpy.data.objects.remove(copy)

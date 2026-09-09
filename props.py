@@ -54,7 +54,7 @@ def _on_branch_switch(self, context):
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
-    mix_factor: FloatProperty(name="Mix", soft_min=0.0, soft_max=1.0, default=1.0, update=_on_enabled_update)
+    mix_factor: FloatProperty(name="Mix", soft_min=0, soft_max=1, default=1, update=_on_enabled_update)
     has_mix_slider: BoolProperty(name="Has Slider", default=False)
     # Persistent layer UID (separate from vertex IDs; 0 = unassigned)
     uid: IntProperty(default=0)

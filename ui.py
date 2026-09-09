@@ -107,7 +107,11 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layout = self.layout
         layout.operator(EL_OT_layer_merge_down.bl_idname, icon="TRIA_UP_BAR")
         layout.operator(EL_OT_bake_upto.bl_idname, icon="IMPORT")
-        layout.prop(context.object.edit_layers.layers[context.object.edit_layers.active_index], "has_mix_slider", icon="CENTER_ONLY")
+        layer = context.object.edit_layers.layers[context.object.edit_layers.active_index]
+        layout.prop(layer, "has_mix_slider", icon="CENTER_ONLY")
+        if layer.has_mix_slider:
+            layout.prop(layer, "slider_min")
+            layout.prop(layer, "slider_max")
 
 
 class EL_UL_layers(bpy.types.UIList):
@@ -152,11 +156,17 @@ class EL_UL_layers(bpy.types.UIList):
                 else:
                     sub.label(text=_T("← {count} branches").format(count=len(div)))
         if item.has_mix_slider:
-            row.prop(
+            row.alignment = 'CENTER'
+            sub = row.column()
+            # sub.alignment = 'CENTER'
+            sub.scale_y = 0.8
+            sub.separator(factor=0.3)
+            sub.prop(
                 item,
                 "mix_factor",
-                text="mix",
-                emboss=False,
+                text="",
+                emboss=True,
+                slider=True,
             )
         row.prop(
             item,
