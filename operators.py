@@ -978,7 +978,7 @@ class EL_OT_set_branch_data(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _poll_stack_idle(context)
+        return _poll_mesh_object(context)
 
     def execute(self, context):
         stack = context.object.edit_layers
