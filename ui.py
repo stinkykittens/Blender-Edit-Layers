@@ -111,8 +111,8 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layout.prop(layer, "disable_with_parent")
         layout.prop(layer, "has_mix_slider", icon="CENTER_ONLY")
         if layer.has_mix_slider:
-            layout.prop(layer, "min_factor")
-            layout.prop(layer, "max_factor")
+            layout.prop(layer, "factor_min")
+            layout.prop(layer, "factor_max")
 
 
 class EL_UL_layers(bpy.types.UIList):

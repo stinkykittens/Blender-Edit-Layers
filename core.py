@@ -321,6 +321,8 @@ def _apply_layer(bm, idl, data, warnings, layer):
     if faces:
         bmesh.ops.delete(bm, geom=faces, context="FACES_ONLY")
 
+    factor = min(max(layer.factor_min + layer.mix_factor * (layer.factor_max - layer.factor_min), layer.factor_min), layer.factor_max)
+
     # 4. Move vertices (delta)
     # Applied before creation so anchor-relative new vertices can reference
     # the anchors' post-move positions (the diff is computed against them too)
@@ -330,7 +332,7 @@ def _apply_layer(bm, idl, data, warnings, layer):
             warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
         if layer.has_mix_slider:
-            v.co += Vector(d) * layer.mix_factor
+            v.co += Vector(d) * factor
         else:
             v.co += Vector(d)
 

@@ -84,10 +84,10 @@ def _get_has_foldable_children(self):
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update, get=_get_enabled, set=_set_enabled)
-    mix_factor: FloatProperty(name="Mix", soft_min=0, soft_max=1, default=1, update=_on_enabled_update)
+    mix_factor: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
     has_mix_slider: BoolProperty(name="Has Slider", default=False)
-    min_factor: FloatProperty(name="Factor Min")
-    max_factor: FloatProperty(name="Factor MAx")
+    factor_min: FloatProperty(name="Factor Min", default=0, update=_on_enabled_update)
+    factor_max: FloatProperty(name="Factor Max", default=1, update=_on_enabled_update)
     disable_with_parent: BoolProperty(name="Disable with parent", default=False)
     has_foldable_children: BoolProperty(get=_get_has_foldable_children)
     is_folded: BoolProperty(default=False)
