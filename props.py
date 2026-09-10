@@ -50,18 +50,32 @@ def _on_branch_switch(self, context):
         ):
             _rebuild(obj)
 
+def _get_enabled(self):
+    if not self.internal_enabled:
+        return False
+    if self.disable_with_parent:
+        for l in bpy.context.object.edit_layers.layers:
+            if l.uid == self.parent:
+                return l.enabled
+    return self.internal_enabled
+
+def _set_enabled(self, v):
+    self.internal_enabled = v
 
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
-    enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
+    enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update, get=_get_enabled, set=_set_enabled)
     mix_factor: FloatProperty(name="Mix", soft_min=0, soft_max=1, default=1, update=_on_enabled_update)
     has_mix_slider: BoolProperty(name="Has Slider", default=False)
+    disable_with_parent: BoolProperty(name="Disable with parent", default=False)
     # Persistent layer UID (separate from vertex IDs; 0 = unassigned)
     uid: IntProperty(default=0)
     # UID of the parent layer (0 = directly on the base mesh)
     parent: IntProperty(default=0)
     # Diff JSON
     data: StringProperty(default="")
+
+    internal_enabled: BoolProperty()
 
 
 class EL_Branch(bpy.types.PropertyGroup):

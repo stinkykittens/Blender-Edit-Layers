@@ -108,10 +108,11 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layout.operator(EL_OT_layer_merge_down.bl_idname, icon="TRIA_UP_BAR")
         layout.operator(EL_OT_bake_upto.bl_idname, icon="IMPORT")
         layer = context.object.edit_layers.layers[context.object.edit_layers.active_index]
+        layout.prop(layer, "disable_with_parent")
         layout.prop(layer, "has_mix_slider", icon="CENTER_ONLY")
-        if layer.has_mix_slider:
-            layout.prop(layer, "slider_min")
-            layout.prop(layer, "slider_max")
+        # if layer.has_mix_slider:
+        #     layout.prop(layer, "slider_min")
+        #     layout.prop(layer, "slider_max")
 
 
 class EL_UL_layers(bpy.types.UIList):
