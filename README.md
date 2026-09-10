@@ -2,13 +2,13 @@
 
 ## BETA
 
-The free [b]Edit Layers[/b] addon by Hayashihikaru adds a awesome way of editing your meshes to blender.
+The free **Edit Layers** addon by Hayashihikaru adds a awesome way of editing your meshes to blender.
 You might be familiar with 3ds-max's modifier stack and it's edit-poly modifier.
 It is very useful for non-destructive mesh editing. Blender can't do this out of the box. The changes you've made in edit or sculpt mode are instantly baked into your mesh and there is no way to revert those changes.
 The Edit Layers Addon fixes that problem by allowing you to make edits on a per layer basis and disabling/enabling those layers.
 It's a great starting point. I encourage everyone to try it out, espacially if you've used 3ds-max before. There are also branches so you can organize your layers better.
 However there is one major problem, when you want to use e.g. vertex groups, uvs or vertex painting. The data just gets lost everytime the mesh rebuilds.
-That is why I have started developing [b]Advanced Layer System For Blender[/b]. My plugin uses the same core princibles but aims to be more robust and it adds some very useful and advanced features that also makes blender a Z-Brush alternative if you want a similar layer system on top of the core layer mechanics.
+That is why I have started developing **Advanced Layer System For Blender**. My plugin uses the same core princibles but aims to be more robust and it adds some very useful and advanced features that also makes blender a Z-Brush alternative if you want a similar layer system on top of the core layer mechanics.
 
 - Under development
 - I am not sure if this will remain free
