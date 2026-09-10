@@ -7,6 +7,7 @@ import bmesh
 
 from bpy import (types)
 
+
 from .common import (
     COMPARE_PROP,
     ID_ATTR,

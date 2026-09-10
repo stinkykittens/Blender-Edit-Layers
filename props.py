@@ -50,6 +50,10 @@ def _on_branch_switch(self, context):
         ):
             _rebuild(obj)
 
+
+def _set_enabled(self, v):
+    self.internal_enabled = v
+
 def _get_enabled(self):
     if not self.internal_enabled:
         return False
@@ -59,23 +63,44 @@ def _get_enabled(self):
                 return l.enabled
     return self.internal_enabled
 
-def _set_enabled(self, v):
-    self.internal_enabled = v
+def _get_hierarchy_parent(self):
+    if not self.disable_with_parent:
+        return -1
+    for l in bpy.context.object.edit_layers.layers:
+        if l.uid == self.parent:
+            if not l.disable_with_parent:
+                return l.uid
+            else:
+                return _get_hierarchy_parent(l)
+    return -1
 
+def _get_has_foldable_children(self):
+    for l in bpy.context.object.edit_layers.layers:
+        if l.hierarchy_parent == self.uid:
+            return True
+    return False
+
+#TODO: a way to delete vertexes from the data; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update, get=_get_enabled, set=_set_enabled)
     mix_factor: FloatProperty(name="Mix", soft_min=0, soft_max=1, default=1, update=_on_enabled_update)
     has_mix_slider: BoolProperty(name="Has Slider", default=False)
+    min_factor: FloatProperty(name="Factor Min")
+    max_factor: FloatProperty(name="Factor MAx")
     disable_with_parent: BoolProperty(name="Disable with parent", default=False)
+    has_foldable_children: BoolProperty(get=_get_has_foldable_children)
+    is_folded: BoolProperty(default=False)
     # Persistent layer UID (separate from vertex IDs; 0 = unassigned)
     uid: IntProperty(default=0)
     # UID of the parent layer (0 = directly on the base mesh)
     parent: IntProperty(default=0)
+    # UID of the parent or grand parent this layer expands/folds and disables with
+    hierarchy_parent: IntProperty(default=0, get=_get_hierarchy_parent)
     # Diff JSON
-    data: StringProperty(default="")
+    data: StringProperty(default="") #TODO: pinned vertices; deformation strenght
 
-    internal_enabled: BoolProperty()
+    internal_enabled: BoolProperty(default=True)
 
 
 class EL_Branch(bpy.types.PropertyGroup):

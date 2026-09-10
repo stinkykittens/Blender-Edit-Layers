@@ -110,9 +110,9 @@ class EL_MT_layer_menu(bpy.types.Menu):
         layer = context.object.edit_layers.layers[context.object.edit_layers.active_index]
         layout.prop(layer, "disable_with_parent")
         layout.prop(layer, "has_mix_slider", icon="CENTER_ONLY")
-        # if layer.has_mix_slider:
-        #     layout.prop(layer, "slider_min")
-        #     layout.prop(layer, "slider_max")
+        if layer.has_mix_slider:
+            layout.prop(layer, "min_factor")
+            layout.prop(layer, "max_factor")
 
 
 class EL_UL_layers(bpy.types.UIList):
@@ -130,6 +130,12 @@ class EL_UL_layers(bpy.types.UIList):
         stack = data
         multi = len(stack.branches) > 1
         row = layout.row(align=True)
+
+        if item.has_foldable_children:
+            row.prop(item, "is_folded", icon_only=True, emboss=False, icon=("RIGHTARROW_THIN" if item.is_folded else "DOWNARROW_HLT"))
+        elif item.disable_with_parent:
+            row.separator(factor=3)
+        
         if multi:
             ind = row.row(align=True)
             ind.ui_units_x = 0.5
@@ -176,6 +182,7 @@ class EL_UL_layers(bpy.types.UIList):
             icon="HIDE_OFF" if item.enabled else "HIDE_ON",
             emboss=False,
         )
+        print("enabled: " + str(item.enabled))
 
     def filter_items(self, context, data, propname):
         stack = data
@@ -185,14 +192,24 @@ class EL_UL_layers(bpy.types.UIList):
         order = []
         hidden_order = len(path_pos)
         for l in layers:
-            pos = path_pos.get(l.uid)
-            if pos is not None and (l.uid != 0 or not stack.branches):
-                flags.append(self.bitflag_filter_item)
-                order.append(pos)
-            else:
-                flags.append(0)
-                order.append(hidden_order)
-                hidden_order += 1
+            # Skip this item if the hierarchy parent i folded
+            skip = False
+            if l.disable_with_parent:
+                fold_parent = l.hierarchy_parent
+                for p in layers:
+                    if p.uid == fold_parent:
+                        skip = p.is_folded
+                        continue
+
+            if not skip:
+                pos = path_pos.get(l.uid)
+                if pos is not None and (l.uid != 0 or not stack.branches):
+                    flags.append(self.bitflag_filter_item)
+                    order.append(pos)
+                    continue
+            flags.append(0)
+            order.append(hidden_order)
+            hidden_order += 1
         return flags, order
 
 
