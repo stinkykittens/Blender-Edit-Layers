@@ -62,8 +62,8 @@ def _el_load_post(_dummy):
     _blocked_notice.clear()
     _rescan_no_keys()
     bpy.app.handlers.frame_change_post.append(_animation_update)
-    bpy.app.handlers.animation_playback_post(_animation_end)
-    bpy.app.handlers.animation_playback_pre(_animation_start)
+    bpy.app.handlers.animation_playback_post.append(_animation_end)
+    bpy.app.handlers.animation_playback_pre.append(_animation_start)
 
 def _animation_update(scene, depsgraph):
     obj = bpy.context.object
