@@ -1,4 +1,37 @@
-# Edit Layers
+# Advanced Layer System For Blender
+
+## BETA
+
+The free [b]Edit Layers[/b] addon by Hayashihikaru adds a awesome way of editing your meshes to blender.
+You might be familiar with 3ds-max's modifier stack and it's edit-poly modifier.
+It is very useful for non-destructive mesh editing. Blender can't do this out of the box. The changes you've made in edit or sculpt mode are instantly baked into your mesh and there is no way to revert those changes.
+The Edit Layers Addon fixes that problem by allowing you to make edits on a per layer basis and disabling/enabling those layers.
+It's a great starting point. I encourage everyone to try it out, espacially if you've used 3ds-max before. There are also branches so you can organize your layers better.
+However there is one major problem, when you want to use e.g. vertex groups, uvs or vertex painting. The data just gets lost everytime the mesh rebuilds.
+That is why I have started developing [b]Advanced Layer System For Blender[/b]. My plugin uses the same core princibles but aims to be more robust and it adds some very useful and advanced features that also makes blender a Z-Brush alternative if you want a similar layer system on top of the core layer mechanics.
+
+- Under development
+- I am not sure if this will remain free
+- I am a game dev and the features I added are targetet to game artists/devs. Though I believe any 3D artist can benefit from this.
+
+## New Features (Currently)
+- Expose some properties for custom ui systems like PieMaster.
+- Flexible Ways to preserve vertex data and uvs (you can create a data preserve object and set it's mode on a per branch basis. If the branch doesn't have such an object it will use the current mesh wich works on its own but can cause distortion/data loss).
+- Mix layers: You can use a slider to blend in layers. You can make changes more subtle or more extreme depending on what you like. You quickly generate lots of interesting variation of a mesh.
+- These mix slider can be animated. However the mesh has to rebuild on every frame, so I've also added frame skipping. If you want to animate using mix layers your on the safer side if you use the next feature.
+- Bake With Shape Keys: Great for animators. It will bake your mix layers to shape keys.
+- Advanced organization of layers with foldout ui and simple parenting system.
+## Whats planned???
+- Optimize bake times when using branches.
+- UI Improvements. Whith branches the layers list gets a bit messy.
+- Bake to shape keys and preserve animation data.
+- Initialize a Stack on objects with shape keys: Will create mix layers for each shape key and gets rid of them.
+- Removing selected vertices from a layer. Vertex Groups can then be used as a simple way of masking.
+- Layer masks using V-Paint mode (pretty advanced).
+- Pin Vertices on layer. A way to make vertices stay where there should be, no matter what you do with sliders etc.
+
+This addon uses the Free Edit Layers addon by Hayashihikaru for its core logic! Please check it out https://extensions.blender.org/add-ons/edit-layers/
+## Edit Layers (Core functionality)
 
 **English** | [日本語](README.ja.md)
 
@@ -104,11 +137,11 @@ Recommended: create shape keys after you finish modeling with Edit Layers and ba
 
 ## Where the data lives
 
-| Data | Location |
-|---|---|
-| Layer stack | `Object.edit_layers` (saved in the .blend) |
-| Base mesh | `<mesh name>_el_base` (Mesh datablock with a fake user) |
-| Persistent vertex IDs | `el_id` INT attribute on the mesh (POINT domain) |
+| Data                  | Location                                                |
+| --------------------- | ------------------------------------------------------- |
+| Layer stack           | `Object.edit_layers` (saved in the .blend)              |
+| Base mesh             | `<mesh name>_el_base` (Mesh datablock with a fake user) |
+| Persistent vertex IDs | `el_id` INT attribute on the mesh (POINT domain)        |
 
 If anything looks wrong, the **Rebuild** button re-applies the stack. Broken references are reported as warnings at the bottom of the panel and the affected parts are skipped (no crashes).
 
