@@ -24,6 +24,7 @@ classes = (
     props.EL_Layer,
     props.EL_Branch,
     props.EL_Stack,
+    props.EL_CustomAnchor,
     operators.EL_OT_stack_init,
     operators.EL_OT_record_new,
     operators.EL_OT_record_edit,

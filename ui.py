@@ -182,7 +182,6 @@ class EL_UL_layers(bpy.types.UIList):
             icon="HIDE_OFF" if item.enabled else "HIDE_ON",
             emboss=False,
         )
-        print("enabled: " + str(item.enabled))
 
     def filter_items(self, context, data, propname):
         stack = data
@@ -384,7 +383,7 @@ class EL_PT_panel(bpy.types.Panel):
             row = layout.row(align=True)
             row.prop(stack, "bake_with_shape_keys", icon_only=True, icon="SHAPEKEY_DATA")
             row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
-            row.operator(EL_OT_bake_copy.bl_idname, text="Duplicate Bake", icon="EXPORT")
+            row.operator(EL_OT_bake_copy.bl_idname, text="Bake Duplicate", icon="EXPORT")
 
         warnings = _last_warnings.get(obj.name)
         if warnings:
@@ -394,13 +393,12 @@ class EL_PT_panel(bpy.types.Panel):
                 box.label(text=w)
             if len(warnings) > 8:
                 box.label(text=_T("... and {count} more").format(count=len(warnings) - 8))
+
 def register_draw_handler():
     global _draw_handle
     if _draw_handle is None:
         _draw_handle = bpy.types.SpaceView3D.draw_handler_add(
-            _draw_influence, (), "WINDOW", "POST_VIEW"
-        )
-
+            _draw_influence, (), "WINDOW", "POST_VIEW")
 
 def unregister_draw_handler():
     global _draw_handle
