@@ -182,6 +182,9 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             source_obj = obj.copy()
             source_obj.data = obj.data.copy()
             bpy.context.collection.objects.link(source_obj)
+            source_obj.location = (0, 0, 0)
+            source_obj.rotation_euler = (0, 0, 0)
+            source_obj.scale = (1, 1, 1)
     
     path = _branch_path(stack, branch_index)
     warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto)
@@ -202,6 +205,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
 
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
+    #TODO: Use bpy.ops.object.data_transfer instead of the modifier
     br = obj.edit_layers.branches[obj.edit_layers.active_branch]
     modifier: types.DataTransferModifier = obj.modifiers.new('_DATA_TRANSFER', 'DATA_TRANSFER')
     modifier.object = source_obj

@@ -1074,6 +1074,9 @@ class EL_OT_set_branch_data(bpy.types.Operator):
         data_obj.name = br.name + "_Data"
         bpy.context.collection.objects.link(data_obj)
         data_obj.parent = context.object
+        data_obj.location = (0, 0, 0)
+        data_obj.rotation_euler = (0, 0, 0)
+        data_obj.scale = (1, 1, 1)
         data_obj.hide_viewport = True
         data_obj.hide_render = True
         br.data_obj = data_obj.name

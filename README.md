@@ -29,6 +29,9 @@ That is why I have started developing **Advanced Layer System For Blender**. My 
 - Removing selected vertices from a layer. Vertex Groups can then be used as a simple way of masking.
 - Layer masks using V-Paint mode (pretty advanced).
 - Pin Vertices on layer. A way to make vertices stay where there should be, no matter what you do with sliders etc.
+- Create slider override ability on branches.
+- Use sliders to blend crease and edge weights.
+- Change name to 'Wonderful Layer Stack'
 
 This addon uses the Free Edit Layers addon by Hayashihikaru for its core logic! Please check it out https://extensions.blender.org/add-ons/edit-layers/
 ## Edit Layers (Core functionality)
