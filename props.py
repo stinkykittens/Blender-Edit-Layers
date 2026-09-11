@@ -58,8 +58,9 @@ def _get_enabled(self):
     if not self.internal_enabled:
         return False
     if self.disable_with_parent:
+        hierarchy_parent = _get_hierarchy_parent(self)
         for l in bpy.context.object.edit_layers.layers:
-            if l.uid == self.parent:
+            if l.uid == hierarchy_parent:
                 return l.enabled
     return self.internal_enabled
 
