@@ -384,3 +384,68 @@ def _active_branch_has_data_obj(obj) -> bool:
         if any(c.name == br.data_obj for c in obj.children):
             return True
     return False
+
+def _bake_mesh(obj):
+    stack = obj.edit_layers
+    _rebuild(obj)
+    _clear_compares(obj)
+
+    if stack.bake_with_shape_keys:
+        path = _branch_path(stack)
+        mix_values = []
+        mix_indexes = []
+        
+        for i, layer in enumerate(path):
+            if layer.enabled and layer.has_mix_slider:
+                for idx, l in enumerate(stack.layers):
+                    if l == layer:        
+                        mix_indexes.append(idx)
+                        break
+                mix_values.append(layer.mix_factor)
+                layer.mix_factor = 0
+
+        _rebuild(obj)
+
+        # Create a copy for every slider with its weight to the max
+        shape_copies = []
+        for i, v in enumerate(mix_values):
+            tmp = obj.copy()
+            tmp.data = tmp.data.copy()
+            tmp.edit_layers.layers[mix_indexes[i]].mix_factor = 1
+            _rebuild(tmp, transfer_data=False)
+            shape_copies.append(tmp)
+
+        # Convert them into shape keys
+        obj.shape_key_add(name="Basis")
+        for i, copy in enumerate(shape_copies):
+            key = obj.shape_key_add(name=obj.edit_layers.layers[mix_indexes[i]].name)
+            for idx, vertex in enumerate(copy.data.vertices):
+                key.data[idx].co = vertex.co
+            if mix_values[i] < 0:
+                key.slider_min = mix_values[i]
+            elif mix_values[i] > 1:
+                key.slider_max = mix_values[i]
+            key.value = mix_values[i]
+            mesh = copy.data
+            bpy.data.objects.remove(copy)
+            bpy.data.meshes.remove(mesh)
+
+    base = stack.base_mesh
+    stack.base_mesh = None
+    if base and base.users <= 1:
+        bpy.data.meshes.remove(base)
+
+    stack.layers.clear()
+    stack.branches.clear()
+    stack.initialized = False
+    stack.active_index = 0
+    stack.active_branch = 0
+    stack.next_id = 1
+    stack.next_uid = 1
+
+    attr = obj.data.attributes.get(ID_ATTR)
+    if attr:
+        obj.data.attributes.remove(attr)
+    _last_warnings.pop(obj.name, None)
+    _last_state.pop(obj.name, None)
+
