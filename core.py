@@ -269,8 +269,7 @@ def _find_face(vmap, idl, ids):
     return None
 
 
-def _apply_layer(bm, idl, data, warnings, layer):
-    print(data)
+def _apply_layer(bm, idl, data, warnings, layer, ignore_mix_factor=False):
     """Apply one layer's diff to the bmesh
 
     Deletions whose target is missing are skipped silently (it just means an
@@ -322,7 +321,10 @@ def _apply_layer(bm, idl, data, warnings, layer):
     if faces:
         bmesh.ops.delete(bm, geom=faces, context="FACES_ONLY")
 
-    factor = min(max(layer.factor_min + layer.mix_factor * (layer.factor_max - layer.factor_min), layer.factor_min), layer.factor_max)
+    if ignore_mix_factor:
+        factor = 1
+    else:
+        factor = min(max(layer.factor_min + layer.mix_factor * (layer.factor_max - layer.factor_min), layer.factor_min), layer.factor_max)
 
     # 4. Move vertices (delta)
     # Applied before creation so anchor-relative new vertices can reference

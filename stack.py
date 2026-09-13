@@ -109,7 +109,7 @@ def _branch_layer_stats(stack, branch_index):
     return len(mine) - own, own
 
 
-def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None):
+def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None, ignore_mix_factor=False):
     """Apply the layers of path in order onto a copy of the base mesh, write to mesh
 
     Returns (warnings, list of layer uids actually applied).
@@ -132,7 +132,7 @@ def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None
             # Applying attributes may add vertex layers, which invalidates
             # existing layer handles, so re-fetch the ID layer every iteration
             idl = _ensure_id_layer(bm)
-            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer)
+            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer, ignore_mix_factor=ignore_mix_factor)
             applied.append(layer.uid)
         bm.normal_update()
         bm.to_mesh(mesh)
@@ -166,7 +166,7 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False):
     """Rebuild the object from the active (or given) branch"""
 
     if bpy.context.object.mode == "EDIT":
@@ -187,7 +187,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             source_obj.scale = (1, 1, 1)
     
     path = _branch_path(stack, branch_index)
-    warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto)
+    warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
     _last_warnings[obj.name] = warnings
     _last_state[obj.name] = {

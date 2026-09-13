@@ -1,6 +1,7 @@
 """Panel, lists, menu and the viewport overlay"""
 
 import bpy
+import bmesh
 
 from .common import _blocked_notice, _last_warnings
 from .i18n import _T
@@ -9,6 +10,7 @@ from .operators import (
     EL_OT_bake,
     EL_OT_bake_copy,
     EL_OT_bake_upto,
+    EL_OT_select,
     EL_OT_set_branch_data,
     EL_OT_branch_create,
     EL_OT_branch_remove,
@@ -384,6 +386,25 @@ class EL_PT_panel(bpy.types.Panel):
             row.prop(stack, "bake_with_shape_keys", icon_only=True, icon="SHAPEKEY_DATA")
             row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
             row.operator(EL_OT_bake_copy.bl_idname, text="Bake Duplicate", icon="EXPORT")
+        elif obj.mode == "EDIT" and rec_layer is not None:
+            layout.label(text="--Select--")
+            row = layout.row(align=True)
+            row.operator(EL_OT_select.bl_idname, text="New Verts", icon="VERTEXSEL").mode = "NEW_VERTS"
+            row.operator(EL_OT_select.bl_idname, text="Moved Verts", icon="VERTEXSEL").mode = "MOVED_VERTS"
+            row = layout.row(align=True)
+            row.operator(EL_OT_select.bl_idname, text="New Edges", icon="EDGESEL").mode = "NEW_EDGES"
+            row.operator(EL_OT_select.bl_idname, text="New Faces", icon="FACESEL").mode = "NEW_FACES"
+            vertex_selection = [v.index for v in bmesh.from_edit_mesh(bpy.context.edit_object.data).verts if v.select]
+            if len(vertex_selection) > 0:
+                layout.label(text="--Edits--")
+                row = layout.row(align=True)
+                row.operator(EL_OT_bake.bl_idname, text="Automatic Anchors")
+                row.operator(EL_OT_bake.bl_idname, text="Static Anchors")
+                row.operator(EL_OT_bake.bl_idname, text="Custom Anchors") #TODO
+                row = layout.row(align=True)
+                row.operator(EL_OT_bake.bl_idname, text="Remove Selected")
+
+
 
         warnings = _last_warnings.get(obj.name)
         if warnings:

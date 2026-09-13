@@ -6,6 +6,8 @@ import bpy
 import bmesh
 from bpy.props import EnumProperty
 
+from .props import EL_Layer
+
 from .common import (
     COMPARE_PROP,
     ID_ATTR,
@@ -183,7 +185,7 @@ class EL_OT_record_edit(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Build up to just before the target layer and take the snapshot
-        _rebuild(obj, upto=pos, respect_enabled=False)
+        _rebuild(obj, upto=pos, respect_enabled=False, ignore_mix_factor=True) # TODO: Add ui elements to control the booleans here if that works
         bm = bmesh.new()
         bm.from_mesh(obj.data)
         idl = _ensure_id_layer(bm)
@@ -192,7 +194,7 @@ class EL_OT_record_edit(bpy.types.Operator):
         # Start editing from the state with the target layer itself applied
         warnings = []
         if layer.data:
-            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer)
+            _apply_layer(bm, idl, json.loads(layer.data), warnings, layer, ignore_mix_factor=True)
         bm.normal_update()
         bm.to_mesh(obj.data)
         bm.free()
@@ -998,4 +1000,71 @@ class EL_OT_set_branch_data(bpy.types.Operator):
         data_obj.hide_viewport = True
         data_obj.hide_render = True
         br.data_obj = data_obj.name
+        return {"FINISHED"}
+
+class EL_OT_select(bpy.types.Operator):
+    bl_idname = "edit_layers.select"
+    bl_label = "Select"
+    bl_options = {"REGISTER", "UNDO"}
+
+    mode: EnumProperty(
+            name="Mode",
+            items=[
+                ("MOVED_VERTS", "", ""),
+                ("NEW_VERTS", "", ""),
+                ("NEW_EDGES", "", ""),
+                ("NEW_FACES", "", ""),
+            ],
+            default="NEW_VERTS",
+        )
+    
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context)
+
+    def execute(self, context):
+        obj = context.edit_object
+        stack = context.object.edit_layers
+        layer: EL_Layer
+        for l in stack.layers:
+            if l.uid == stack.recording_uid:
+                layer = l
+
+        if layer is None or obj is None:
+            return {"CANCELLED"}
+
+        bm = bmesh.from_edit_mesh(obj.data)
+
+        data = json.loads(layer.data)
+
+        indices = []
+        if self.mode == "MOVED_VERTS":
+            indices = data["moved"].keys()
+        elif self.mode == "NEW_VERTS":
+            indices = data["new_verts"].keys()
+        elif self.mode == "NEW_EDGES":
+            indices = data["new_edges"] #TODO
+        elif self.mode == "NEW_FACES":
+            indices = data["new_faces"]
+        
+        if self.mode == "NEW_FACES":
+            bpy.ops.mesh.select_mode(type="FACE")
+            face_indices = []
+
+            for f in bm.faces:
+                f_verts = {v.index for v in f.verts}
+                for v in indices:
+                    verts = {int(i) - 1 for i in v}
+                    if f_verts == verts:
+                        face_indices.append(f.index)
+            for i in face_indices:
+                if i is not None and 0 <= i < len(bm.faces):
+                    bm.faces[i].select = True
+        else:
+            bpy.ops.mesh.select_mode(type="VERT")
+            indices = [int(i) - 1 for i in indices] #TODO: Why i have to substract here
+            for i in indices:
+                if 0 <= i < len(bm.verts):
+                    bm.verts[i].select = True
+        bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
         return {"FINISHED"}

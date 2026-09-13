@@ -21,10 +21,10 @@ from . import handlers, i18n, operators, props, ui
 from .stack import _rebuild
 
 classes = (
+    props.EL_CustomAnchor,
     props.EL_Layer,
     props.EL_Branch,
     props.EL_Stack,
-    props.EL_CustomAnchor,
     operators.EL_OT_stack_init,
     operators.EL_OT_record_new,
     operators.EL_OT_record_edit,
@@ -46,6 +46,7 @@ classes = (
     operators.EL_OT_detach,
     operators.EL_OT_bake,
     operators.EL_OT_bake_copy,
+    operators.EL_OT_select,
     ui.EL_UL_layers,
     ui.EL_UL_branches,
     ui.EL_PT_panel,

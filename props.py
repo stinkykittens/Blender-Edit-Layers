@@ -5,6 +5,7 @@ from bpy.props import (
     BoolProperty,
     CollectionProperty,
     FloatVectorProperty,
+    IntVectorProperty,
     FloatProperty,
     IntProperty,
     PointerProperty,
@@ -81,6 +82,12 @@ def _get_has_foldable_children(self):
             return True
     return False
 
+class EL_CustomAnchor(bpy.types.PropertyGroup):
+    vertex: IntProperty(default=-1)
+    static: BoolProperty(default=False)
+    vertices: IntVectorProperty(size=4, default=(-1, -1, -1, -1))
+    offset: FloatVectorProperty(size=3, default=(0, 0, 0))
+
 #TODO: a way to delete vertexes from the data; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
@@ -154,9 +161,3 @@ class EL_Stack(bpy.types.PropertyGroup):
     enable_animation: BoolProperty(default=False, name="Enable Animation")
     frame_skip: IntProperty(default=1, min=0, max=10, name="Frame Skip", description="Animation Playback would rebuild the mesh on every single frame, use this to optimize performance.\n0 means no frames get skipped, 1 means every second frame get skipped...")
     bake_with_shape_keys: BoolProperty()
-
-class EL_CustomAnchor(bpy.types.PropertyGroup):
-    vertex: IntProperty()
-    static: BoolProperty()
-    vertices: CollectionProperty(type=bpy.types.IntProperty)
-    offset: FloatVectorProperty()
