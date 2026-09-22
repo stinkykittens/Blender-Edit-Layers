@@ -22,6 +22,7 @@ from .operators import (
     EL_OT_layer_merge_down,
     EL_OT_layer_move,
     EL_OT_layer_remove,
+    EL_OT_layer_add_empty,
     EL_OT_notice_clear,
     EL_OT_rebuild,
     EL_OT_record_edit,
@@ -373,6 +374,7 @@ class EL_PT_panel(bpy.types.Panel):
         side.operator(EL_OT_layer_move.bl_idname, text="", icon="TRIA_UP").direction = "UP"
         side.operator(EL_OT_layer_move.bl_idname, text="", icon="TRIA_DOWN").direction = "DOWN"
         side.separator()
+        side.operator(EL_OT_layer_add_empty.bl_idname, text="", icon="ADD")
         side.operator(EL_OT_layer_remove.bl_idname, text="", icon="REMOVE")
         side.separator()
         side.menu(EL_MT_layer_menu.bl_idname, text="", icon="DOWNARROW_HLT")

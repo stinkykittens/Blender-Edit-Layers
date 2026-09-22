@@ -431,6 +431,47 @@ class EL_OT_adopt(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class EL_OT_layer_add_empty(bpy.types.Operator):
+    """Add an empty layer underneeth the selected one"""
+
+    bl_idname = "edit_layers.layer_add_empty"
+    bl_label = "Add Empty Layer"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        if not _poll_stack_idle(context):
+            return False
+        return _active_layer(context.object.edit_layers) is not None
+
+    def execute(self, context):
+            if _guard_dirty(self, context) or _guard_shape_keys(self, context):
+                return {"CANCELLED"}
+            obj = context.object
+            stack = obj.edit_layers
+
+            # Append the layer at the tip of the branch
+            br = stack.branches[stack.active_branch]
+            layer = stack.layers.add()
+            layer.uid = stack.next_uid
+            stack.next_uid += 1
+            layer.parent = br.head_uid
+            layer.name = f"Layer {layer.uid} "
+            if stack.layers[stack.active_index].uid == br.head_uid:
+                br.head_uid = layer.uid
+                stack.active_index = len(stack.layers) - 1
+            else:
+                # Move the layer up
+                parent = stack.layers[stack.active_index].uid
+                stack.active_index = len(stack.layers) - 1
+                br.head_uid = layer.uid
+                for i in range(len(stack.layers)):
+                    if layer.parent != parent:
+                        bpy.ops.edit_layers.layer_move(direction='UP')
+
+            return {"FINISHED"}
+
+
 class EL_OT_layer_remove(bpy.types.Operator):
     """Remove the selected layer (layers shared with other branches cannot be removed)"""
 

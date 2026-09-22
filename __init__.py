@@ -32,6 +32,7 @@ classes = (
     operators.EL_OT_cancel,
     operators.EL_OT_adopt,
     operators.EL_OT_layer_remove,
+    operators.EL_OT_layer_add_empty,
     operators.EL_OT_layer_move,
     operators.EL_OT_layer_merge_down,
     operators.EL_OT_bake_upto,
