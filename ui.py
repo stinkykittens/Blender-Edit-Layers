@@ -382,6 +382,7 @@ class EL_PT_panel(bpy.types.Panel):
         if not stack.is_recording:
             layout.operator(EL_OT_record_edit.bl_idname, icon="EDITMODE_HLT")
             row = layout.row(align=True)
+            row.prop(stack, "shade_smooth", icon="MOD_SMOOTH", icon_only=True)
             row.operator(EL_OT_rebuild.bl_idname, icon="FILE_REFRESH")
             row = row.row(align=True)
             row.prop(stack, "enable_animation", icon="ACTION", icon_only=stack.enable_animation)

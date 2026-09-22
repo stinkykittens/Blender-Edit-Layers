@@ -557,8 +557,7 @@ class EL_OT_layer_move(bpy.types.Operator):
             _layer_branch_count(stack, upper.uid) > 1
             or _layer_branch_count(stack, lower.uid) > 1
         ):
-            self.report({"ERROR"}, _T("Cannot move across a shared layer"))
-            return {"CANCELLED"}
+            self.report({"WARNING"}, _T("Move across a shared layer"))
 
         # Turn ... P -> upper -> lower -> C ... into ... P -> lower -> upper -> C ...
         lower_children = [l for l in stack.layers if l.parent == lower.uid]

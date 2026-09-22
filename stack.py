@@ -201,6 +201,8 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             mesh = source_obj.data
             bpy.data.objects.remove(source_obj, do_unlink=True)
             bpy.data.meshes.remove(mesh)
+    if stack.shade_smooth:
+        bpy.ops.object.shade_smooth()
     return warnings
 
 
