@@ -269,7 +269,7 @@ def _find_face(vmap, idl, ids):
     return None
 
 
-def _apply_layer(bm, idl, data, warnings, layer, ignore_mix_factor=False):
+def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False):
     """Apply one layer's diff to the bmesh
 
     Deletions whose target is missing are skipped silently (it just means an
@@ -321,10 +321,16 @@ def _apply_layer(bm, idl, data, warnings, layer, ignore_mix_factor=False):
     if faces:
         bmesh.ops.delete(bm, geom=faces, context="FACES_ONLY")
 
-    if ignore_mix_factor:
+    if ignore_mix_factor or not layer.has_mix_slider:
         factor = 1
     else:
         factor = min(max(layer.factor_min + layer.mix_factor * (layer.factor_max - layer.factor_min), layer.factor_min), layer.factor_max)
+    if not ignore_mix_factor and layer.disable_with_parent:
+        parent = layer.hierarchy_parent
+        for l in stack.layers:
+            if l.uid == parent:
+                factor *= min(max(l.factor_min + l.mix_factor * (l.factor_max - l.factor_min), l.factor_min), l.factor_max)
+
 
     # 4. Move vertices (delta)
     # Applied before creation so anchor-relative new vertices can reference
@@ -334,10 +340,7 @@ def _apply_layer(bm, idl, data, warnings, layer, ignore_mix_factor=False):
         if v is None or not v.is_valid:
             warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
-        if layer.has_mix_slider:
-            v.co += Vector(d) * factor
-        else:
-            v.co += Vector(d)
+        v.co += Vector(d) * factor
 
     # 5. New vertices (JSON keys are strings, convert back to int)
     # With anchor data, restore the position as "anchor centroid + offset" so
