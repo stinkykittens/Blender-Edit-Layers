@@ -21,7 +21,6 @@ from . import handlers, i18n, operators, props, ui
 from .stack import _rebuild
 
 classes = (
-    props.EL_CustomAnchor,
     props.EL_Layer,
     props.EL_Branch,
     props.EL_Stack,

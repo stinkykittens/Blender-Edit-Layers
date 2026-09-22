@@ -440,9 +440,7 @@ class EL_OT_layer_add_empty(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        if not _poll_stack_idle(context):
-            return False
-        return _active_layer(context.object.edit_layers) is not None
+        return _poll_stack_idle(context)
 
     def execute(self, context):
             if _guard_dirty(self, context) or _guard_shape_keys(self, context):

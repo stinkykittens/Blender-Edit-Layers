@@ -82,12 +82,6 @@ def _get_has_foldable_children(self):
             return True
     return False
 
-class EL_CustomAnchor(bpy.types.PropertyGroup):
-    vertex: IntProperty(default=-1)
-    static: BoolProperty(default=False)
-    vertices: IntVectorProperty(size=4, default=(-1, -1, -1, -1))
-    offset: FloatVectorProperty(size=3, default=(0, 0, 0))
-
 #TODO: a way to delete vertexes from the data; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
