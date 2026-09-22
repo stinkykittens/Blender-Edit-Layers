@@ -134,6 +134,9 @@ def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None
             idl = _ensure_id_layer(bm)
             _apply_layer(bm, idl, json.loads(layer.data), warnings, layer, stack, ignore_mix_factor=ignore_mix_factor)
             applied.append(layer.uid)
+        if stack.shade_smooth:
+            for f in bm.faces:
+                f.smooth = True
         bm.normal_update()
         bm.to_mesh(mesh)
     finally:
@@ -201,8 +204,6 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             mesh = source_obj.data
             bpy.data.objects.remove(source_obj, do_unlink=True)
             bpy.data.meshes.remove(mesh)
-    if stack.shade_smooth:
-        bpy.ops.object.shade_smooth()
     return warnings
 
 
