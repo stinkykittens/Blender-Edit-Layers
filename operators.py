@@ -980,7 +980,7 @@ class EL_OT_set_branch_data(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _poll_mesh_object(context)
+        return _poll_stack_idle(context) and context.mode == "OBJECT"
 
     def execute(self, context):
         stack = context.object.edit_layers
@@ -1025,10 +1025,7 @@ class EL_OT_select(bpy.types.Operator):
     def execute(self, context):
         obj = context.edit_object
         stack = context.object.edit_layers
-        layer: EL_Layer
-        for l in stack.layers:
-            if l.uid == stack.recording_uid:
-                layer = l
+        layer = stack.layers[stack.active_index]
 
         if layer is None or obj is None:
             return {"CANCELLED"}

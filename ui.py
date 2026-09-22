@@ -337,16 +337,19 @@ class EL_PT_panel(bpy.types.Panel):
             side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
             side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
             side.separator()
+            sub = col.row(align=True)
+            sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
             if _active_branch_has_data_obj(obj):
-                side.scale_x = 0.4
-                side.props_enum(stack.branches[stack.active_branch], "data_transfer_mode")
-            side.operator(EL_OT_set_branch_data.bl_idname, text="", icon="MOD_DATA_TRANSFER")
+                sub.prop_menu_enum(stack.branches[stack.active_branch], "data_transfer_mode", text="Data Transfer: " + stack.branches[stack.active_branch].data_transfer_mode)
+            sub = col.row(align=True)
             if len(stack.branches) > 1 and not stack.is_recording:
                 sub = col.row(align=True)
                 sub.operator(
                     EL_OT_compare.bl_idname, text="Compare", icon="MOD_MIRROR"
                 )
                 sub.operator(EL_OT_compare_clear.bl_idname, text="Clear", icon="X")
+                side.separator()
+                side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
 
         # Layers (path of the active branch)
         col = layout.column()
@@ -386,7 +389,7 @@ class EL_PT_panel(bpy.types.Panel):
             row.prop(stack, "bake_with_shape_keys", icon_only=True, icon="SHAPEKEY_DATA")
             row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
             row.operator(EL_OT_bake_copy.bl_idname, text="Bake Duplicate", icon="EXPORT")
-        elif obj.mode == "EDIT" and rec_layer is not None:
+        if obj.mode == "EDIT":
             layout.label(text="--Select--")
             row = layout.row(align=True)
             row.operator(EL_OT_select.bl_idname, text="New Verts", icon="VERTEXSEL").mode = "NEW_VERTS"
@@ -395,7 +398,7 @@ class EL_PT_panel(bpy.types.Panel):
             row.operator(EL_OT_select.bl_idname, text="New Edges", icon="EDGESEL").mode = "NEW_EDGES"
             row.operator(EL_OT_select.bl_idname, text="New Faces", icon="FACESEL").mode = "NEW_FACES"
             vertex_selection = [v.index for v in bmesh.from_edit_mesh(bpy.context.edit_object.data).verts if v.select]
-            if len(vertex_selection) > 0:
+            if stack.is_recording and rec_layer is not None:
                 layout.label(text="--Edits--")
                 row = layout.row(align=True)
                 row.operator(EL_OT_bake.bl_idname, text="Automatic Anchors")

@@ -304,6 +304,7 @@ def _influence_local(obj):
     _influence_cache["key"] = key
     _influence_cache["data"] = result
     return result
+
 def _poll_mesh_object(context):
     obj = context.object
     return obj is not None and obj.type == "MESH"
