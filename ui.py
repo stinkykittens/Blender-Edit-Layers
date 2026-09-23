@@ -152,6 +152,8 @@ class EL_UL_layers(bpy.types.UIList):
         row.prop(item, "name", text="", emboss=False)
         if multi:
             div = _divergence_map(stack).get(item.uid)
+            print("DIV " + item.name)
+            print(div)
             if div:
                 # Divergence badge: branch color dot + "<- branch name" (display only)
                 sub = row.row(align=True)
@@ -190,7 +192,8 @@ class EL_UL_layers(bpy.types.UIList):
     def filter_items(self, context, data, propname):
         stack = data
         layers = getattr(data, propname)
-        path_pos = {l.uid: pos for pos, l in enumerate(_branch_path(stack))}
+        path = _branch_path(stack)
+        path_pos = {l.uid: pos for pos, l in enumerate(path)}
         flags = []
         order = []
         hidden_order = len(path_pos)
