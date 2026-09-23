@@ -38,6 +38,7 @@ from .stack import (
     _influence_local,
     _is_dirty,
     _layer_branch_count,
+    _layer_branches,
     _poll_mesh_object,
 )
 
@@ -151,6 +152,8 @@ class EL_UL_layers(bpy.types.UIList):
         row.prop(item, "name", text="", emboss=False)
         if multi:
             div = _divergence_map(stack).get(item.uid)
+            print("DIV " + item.name)
+            print(div)
             if div:
                 # Divergence badge: branch color dot + "<- branch name" (display only)
                 sub = row.row(align=True)
@@ -189,19 +192,22 @@ class EL_UL_layers(bpy.types.UIList):
     def filter_items(self, context, data, propname):
         stack = data
         layers = getattr(data, propname)
-        path_pos = {l.uid: pos for pos, l in enumerate(_branch_path(stack))}
+        path = _branch_path(stack)
+        path_pos = {l.uid: pos for pos, l in enumerate(path)}
         flags = []
         order = []
         hidden_order = len(path_pos)
         for l in layers:
-            # Skip this item if the hierarchy parent i folded
+            # Skip this item if the hierarchy parent i folded or if its branch isnt the active one
             skip = False
-            if l.disable_with_parent:
+            if not stack.show_layers_of_previous_branches and stack.active_branch != _layer_branches(stack, l.uid)[0]:
+                skip = True
+            elif l.disable_with_parent:
                 fold_parent = l.hierarchy_parent
                 for p in layers:
                     if p.uid == fold_parent:
                         skip = p.is_folded
-                        continue
+                        break
 
             if not skip:
                 pos = path_pos.get(l.uid)
@@ -360,6 +366,8 @@ class EL_PT_panel(bpy.types.Panel):
                 max(0, min(stack.active_branch, len(stack.branches) - 1))
             ].name
             hdr.label(text=_T("Layers — {name}").format(name=br_name), icon="RENDERLAYERS")
+            hdr.alignment = "RIGHT"
+            hdr.prop(stack, "show_layers_of_previous_branches", text="Show All")
         else:
             hdr.label(text="", icon="RENDERLAYERS")
         sub = hdr.row(align=True)
