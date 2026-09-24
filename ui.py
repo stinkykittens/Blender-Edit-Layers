@@ -140,41 +140,35 @@ class EL_UL_layers(bpy.types.UIList):
         if item.has_foldable_children:
             left.prop(item, "is_folded", icon_only=True, emboss=False, icon=("RIGHTARROW_THIN" if item.is_folded else "DOWNARROW_HLT"))
         elif item.disable_with_parent:
-            left.separator(factor=3)
+            left.separator(factor=4)
         
-        # if multi:
-        #     ind = row.row(align=True)
-        #     ind.ui_units_x = 0.5
-        #     if _layer_branch_count(stack, item.uid) == 1:
-        #         # Display-only color dot (no click, no tooltip)
-        #         br = stack.branches[stack.active_branch]
-        #         ind.template_node_socket(color=(*br.color, 1.0))
-        #     else:
-        #         ind.label(text="")
         left.prop(item, "name", text="", emboss=False)
 
         right = row.row(align=True)
         right.alignment = "RIGHT"
         right.row()
+
         if multi:
             div = _divergence_map(stack).get(item.uid)
             if div:
-                # Divergence badge: branch color dot + "<- branch name" (display only)
+                # Divergence badge: branch color dot + "<- " (display only)
                 sub = right.row(align=True)
+                sub.alignment = "LEFT"
                 for bi in div[:3]:
                     dot = sub.row(align=True)
                     dot.ui_units_x = 0.5
                     dot.template_node_socket(
                         color=(*stack.branches[bi].color, 1.0)
                     )
-                if len(div) == 1:
-                    sub.label(text=f"← {stack.branches[div[0]].name}")
-                else:
-                    sub.label(text=_T("← {count} branches").format(count=len(div)))
+                sub.label(text="← ")
+
         if item.has_mix_slider:
             sub = right.column()
             sub.alignment = 'EXPAND'
             sub.scale_y = 0.8
+            sub.ui_units_x = 6
+            if stack.enable_animation:
+                sub.use_property_split = True
             sub.separator(factor=0.3)
             sub.prop(
                 item,
@@ -182,6 +176,7 @@ class EL_UL_layers(bpy.types.UIList):
                 text="",
                 emboss=True,
                 slider=True,
+                expand=True
             )
         right.prop(
             item,
