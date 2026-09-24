@@ -128,36 +128,39 @@ class EL_UL_layers(bpy.types.UIList):
     """
 
     def draw_item(
-        self, context, layout, data, item, icon,
+        self, context, layout: bpy.types.UILayout, data, item, icon,
         active_data, active_propname, index=0, flt_flag=0,
     ):
         stack = data
         multi = len(stack.branches) > 1
         row = layout.row(align=True)
+        left = row.row(align=True)
+        left.alignment = "LEFT"
 
         if item.has_foldable_children:
-            row.prop(item, "is_folded", icon_only=True, emboss=False, icon=("RIGHTARROW_THIN" if item.is_folded else "DOWNARROW_HLT"))
+            left.prop(item, "is_folded", icon_only=True, emboss=False, icon=("RIGHTARROW_THIN" if item.is_folded else "DOWNARROW_HLT"))
         elif item.disable_with_parent:
-            row.separator(factor=3)
+            left.separator(factor=3)
         
-        if multi:
-            ind = row.row(align=True)
-            ind.ui_units_x = 0.5
-            if _layer_branch_count(stack, item.uid) == 1:
-                # Display-only color dot (no click, no tooltip)
-                br = stack.branches[stack.active_branch]
-                ind.template_node_socket(color=(*br.color, 1.0))
-            else:
-                ind.label(text="")
-        row.prop(item, "name", text="", emboss=False)
+        # if multi:
+        #     ind = row.row(align=True)
+        #     ind.ui_units_x = 0.5
+        #     if _layer_branch_count(stack, item.uid) == 1:
+        #         # Display-only color dot (no click, no tooltip)
+        #         br = stack.branches[stack.active_branch]
+        #         ind.template_node_socket(color=(*br.color, 1.0))
+        #     else:
+        #         ind.label(text="")
+        left.prop(item, "name", text="", emboss=False)
+
+        right = row.row(align=True)
+        right.alignment = "RIGHT"
+        right.row()
         if multi:
             div = _divergence_map(stack).get(item.uid)
-            print("DIV " + item.name)
-            print(div)
             if div:
                 # Divergence badge: branch color dot + "<- branch name" (display only)
-                sub = row.row(align=True)
-                sub.alignment = "RIGHT"
+                sub = right.row(align=True)
                 for bi in div[:3]:
                     dot = sub.row(align=True)
                     dot.ui_units_x = 0.5
@@ -169,9 +172,8 @@ class EL_UL_layers(bpy.types.UIList):
                 else:
                     sub.label(text=_T("← {count} branches").format(count=len(div)))
         if item.has_mix_slider:
-            row.alignment = 'CENTER'
-            sub = row.column()
-            # sub.alignment = 'CENTER'
+            sub = right.column()
+            sub.alignment = 'EXPAND'
             sub.scale_y = 0.8
             sub.separator(factor=0.3)
             sub.prop(
@@ -181,7 +183,7 @@ class EL_UL_layers(bpy.types.UIList):
                 emboss=True,
                 slider=True,
             )
-        row.prop(
+        right.prop(
             item,
             "enabled",
             text="",
@@ -367,7 +369,7 @@ class EL_PT_panel(bpy.types.Panel):
             ].name
             hdr.label(text=_T("Layers — {name}").format(name=br_name), icon="RENDERLAYERS")
             hdr.alignment = "RIGHT"
-            hdr.prop(stack, "show_layers_of_previous_branches", text="Show All")
+            hdr.prop(stack, "show_layers_of_previous_branches", text="Show Former")
         else:
             hdr.label(text="", icon="RENDERLAYERS")
         sub = hdr.row(align=True)
