@@ -129,8 +129,8 @@ class EL_MT_branch_menu(bpy.types.Menu):
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(EL_OT_create_unique_branch.bl_idname, icon="TRIA_UP_BAR").mode = "AUTOREMESH"
-        layout.operator(EL_OT_create_unique_branch.bl_idname, icon="TRIA_UP_BAR").mode = "SELECTED"
+        layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Auto Remesher", icon="TRIA_UP_BAR").mode = "AUTOREMESH"
+        layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Selected", icon="IMPORT").mode = "SELECTED"
 
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
