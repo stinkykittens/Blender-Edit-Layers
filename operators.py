@@ -1111,3 +1111,64 @@ class EL_OT_select(bpy.types.Operator):
                     bm.verts[i].select = True
         bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
         return {"FINISHED"}
+
+def _transform_apply_and_reselect(obj):
+    selection = bpy.context.selected_objects
+    for o in bpy.data.objects:
+        o.select_set(o == obj)
+    bpy.ops.object.transform_apply()
+    for o in bpy.data.objects:
+        o.select_set(o in selection)
+
+class EL_OT_create_unique_branch(bpy.types.Operator):
+    bl_idname = "edit_layers.create_unique_branch"
+    bl_label = "Create Unique Branch"
+    bl_options = {"REGISTER", "UNDO"}
+
+    mode: EnumProperty(
+            name="Mode",
+            items=[
+                ("AUTOREMESH", "", ""),
+                ("SELECTED", "", ""),
+            ],
+            default="SELECTED",
+        )
+
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context) and context.object.mode == "OBJECT"
+    
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+
+        br = stack.branches.add()
+        br.override_base_mesh = True
+        br.head_uid = 0
+        br.name = f"Branch {len(stack.branches)}"
+        _assign_branch_color(stack, br)
+
+        if self.mode == "SELECTED":
+            if len(bpy.context.selected_objects) < 2:
+                return {"CANCELLED"}
+            selection = bpy.context.selected_objects
+            _transform_apply_and_reselect(selection[1])
+            br.name = selection[1].name
+            br.base_mesh = selection[1].data
+            bpy.data.objects.remove(selection[1])
+        elif self.mode == "AUTOREMESH":
+            bpy.ops.object.autoremesher_bridge_remesh_active()
+            remesh = context.object
+            _transform_apply_and_reselect(remesh)
+            br.base_mesh = remesh.data
+            br.name = stack.branches[stack.active_branch].name + "_remesh"
+            obj.select_set(True)
+            bpy.context.view_layer.objects.active = obj
+            bpy.data.objects.remove(remesh)
+
+        stack.active_branch = len(stack.branches) - 1  # the update callback rebuilds
+
+        return {"FINISHED"}
+
+    

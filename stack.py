@@ -195,7 +195,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
     base_mesh = stack.base_mesh
 
     if branch.override_base_mesh:
-        if branch.base_mesh == None or rebuild_br_base_mesh:
+        if (branch.base_mesh == None or rebuild_br_base_mesh) and branch.head_uid != 0:
             branch_path = []
             for l in path:
                 if _is_overriden(stack, branch_index, l.uid):

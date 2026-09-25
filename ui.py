@@ -28,6 +28,7 @@ from .operators import (
     EL_OT_record_edit,
     EL_OT_record_new,
     EL_OT_stack_init,
+    EL_OT_create_unique_branch,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -120,6 +121,16 @@ class EL_MT_layer_menu(bpy.types.Menu):
         if context.object.edit_layers.branches[context.object.edit_layers.active_branch].override_base_mesh:
             layout.prop(layer, "is_branch_base_mesh")
 
+class EL_MT_branch_menu(bpy.types.Menu):
+    """Extra layer operations shown next to the layer list"""
+
+    bl_idname = "EL_MT_branch_menu"
+    bl_label = "Branch Operations"
+
+    def draw(self, context):
+        layout = self.layout
+        layout.operator(EL_OT_create_unique_branch.bl_idname, icon="TRIA_UP_BAR").mode = "AUTOREMESH"
+        layout.operator(EL_OT_create_unique_branch.bl_idname, icon="TRIA_UP_BAR").mode = "SELECTED"
 
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
@@ -348,6 +359,7 @@ class EL_PT_panel(bpy.types.Panel):
             side.enabled = not stack.is_recording
             side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
             side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
+            side.menu(EL_MT_branch_menu.bl_idname, text="", icon="DOWNARROW_HLT")
             side.separator()
             sub = col.row(align=True)
             branch = stack.branches[stack.active_branch]
