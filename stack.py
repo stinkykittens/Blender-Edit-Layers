@@ -43,9 +43,6 @@ def _ensure_branches(stack):
 
 def _branch_path(stack, branch_index=None):
     """Walk from the branch head to the root; return layers in root-to-head order"""
-    if not stack.branches:
-        # Pre-migration (v0.1) data: use registration order as-is
-        return list(stack.layers)
     if branch_index is None:
         branch_index = stack.active_branch
     branch_index = max(0, min(branch_index, len(stack.branches) - 1))
@@ -109,7 +106,7 @@ def _branch_layer_stats(stack, branch_index):
     return len(mine) - own, own
 
 
-def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None, ignore_mix_factor=False):
+def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_enabled=True, upto=None, ignore_mix_factor=False):
     """Apply the layers of path in order onto a copy of the base mesh, write to mesh
 
     Returns (warnings, list of layer uids actually applied).
@@ -120,7 +117,7 @@ def _rebuild_mesh(stack, path, mesh: types.Mesh, respect_enabled=True, upto=None
     bm = bmesh.new()
     
     try:
-        bm.from_mesh(stack.base_mesh)
+        bm.from_mesh(base_mesh)
         _ensure_id_layer(bm)
         for pos, layer in enumerate(path):
             if upto is not None and pos >= upto:
@@ -169,13 +166,14 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False, rebuild_br_base_mesh=False):
     """Rebuild the object from the active (or given) branch"""
 
     if bpy.context.object.mode == "EDIT":
         return []
 
     stack = obj.edit_layers
+    branch = stack.branches[stack.active_branch if branch_index is None else branch_index]
 
     if transfer_data:
         # Get origiginal mesh or data object so otherwise lost data e.g. vertex groups get recover
@@ -188,9 +186,30 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             source_obj.location = (0, 0, 0)
             source_obj.rotation_euler = (0, 0, 0)
             source_obj.scale = (1, 1, 1)
-    
+
     path = _branch_path(stack, branch_index)
-    warnings, applied = _rebuild_mesh(stack, path, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
+    base_mesh = stack.base_mesh
+
+    if branch.override_base_mesh:
+        if branch.base_mesh == None or rebuild_br_base_mesh:
+            branch_path = []
+            for l in path:
+                if branch != stack.branches[_layer_branches(stack, l.uid)[0]]:
+                    branch_path.append(l)
+            branch.base_mesh = stack.base_mesh.copy()
+            _rebuild_mesh(stack, branch_path, base_mesh, branch.base_mesh)
+        base_mesh = branch.base_mesh
+        branch_path = []
+        for l in path:
+            if branch == stack.branches[_layer_branches(stack, l.uid)[0]]:
+                branch_path.append(l)
+        path = branch_path
+        base_mesh = branch.base_mesh
+    
+    for l in path:
+        print(l.uid)
+    
+    warnings, applied = _rebuild_mesh(stack, path, base_mesh, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
     _last_warnings[obj.name] = warnings
     _last_state[obj.name] = {

@@ -185,6 +185,7 @@ class EL_UL_layers(bpy.types.UIList):
             icon="HIDE_OFF" if item.enabled else "HIDE_ON",
             emboss=False,
         )
+        right.label(text=str(item.uid)) #TODO: Remove
 
     def filter_items(self, context, data, propname):
         stack = data
@@ -242,6 +243,7 @@ class EL_UL_branches(bpy.types.UIList):
             sub.label(text=_T("shared {shared} + own {own}").format(shared=shared, own=own))
         else:
             sub.label(text=_T("{count} layers").format(count=len(_branch_path(stack, index))))
+        sub.label(text=str(item.head_uid)) #TODO: Remove
 
 class EL_PT_panel(bpy.types.Panel):
     bl_label = "Edit Layers"
@@ -342,9 +344,11 @@ class EL_PT_panel(bpy.types.Panel):
             side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
             side.separator()
             sub = col.row(align=True)
+            branch = stack.branches[stack.active_branch]
+            sub.prop(branch, "override_base_mesh", icon="MESH_DATA", icon_only=True)
             sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
             if _active_branch_has_data_obj(obj):
-                sub.prop_menu_enum(stack.branches[stack.active_branch], "data_transfer_mode", text="Data Transfer: " + stack.branches[stack.active_branch].data_transfer_mode)
+                sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)
             sub = col.row(align=True)
             if len(stack.branches) > 1 and not stack.is_recording:
                 sub = col.row(align=True)

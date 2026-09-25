@@ -92,7 +92,7 @@ class EL_OT_stack_init(bpy.types.Operator):
         base.name = mesh.name + "_el_base"
         base.use_fake_user = True
 
-        stack.base_mesh = base
+        stack.base_mesh = base # Could be removed
         stack.next_id = next_id
         stack.next_uid = 1
         stack.layers.clear()
@@ -100,6 +100,7 @@ class EL_OT_stack_init(bpy.types.Operator):
         br = stack.branches.add()
         br.name = "Main"
         br.head_uid = 0
+        br.base_mesh = base
         _assign_branch_color(stack, br)
         stack.active_branch = 0
         stack.active_index = 0
@@ -382,7 +383,7 @@ class EL_OT_adopt(bpy.types.Operator):
         # Reconstruct the pre-edit state into a temporary mesh and snapshot it
         tmp = bpy.data.meshes.new("_el_adopt_tmp")
         try:
-            _rebuild_mesh(stack, pre_layers, tmp, respect_enabled=False)
+            _rebuild_mesh(stack, pre_layers, stack.base_mesh, tmp, respect_enabled=False)
             bm = bmesh.new()
             bm.from_mesh(tmp)
             idl = _ensure_id_layer(bm)
@@ -594,6 +595,7 @@ class EL_OT_layer_merge_down(bpy.types.Operator):
         stack = obj.edit_layers
         _ensure_branches(stack)
         layer = _active_layer(stack)
+        branch = stack.branches[stack.active_branch]
         path = _branch_path(stack)
         pos = next((i for i, l in enumerate(path) if l.uid == layer.uid), None)
         if pos is None:
@@ -699,7 +701,7 @@ class EL_OT_bake_upto(bpy.types.Operator):
             return {"CANCELLED"}
 
         # Bake into the base mesh (safe: from_mesh reads fully before writing back)
-        _rebuild_mesh(stack, path, stack.base_mesh, respect_enabled=True, upto=pos + 1)
+        _rebuild_mesh(stack, path, stack.base_mesh, stack.base_mesh, respect_enabled=True, upto=pos + 1)
 
         removed_uids = {l.uid for l in target}
         for l in stack.layers:
@@ -840,7 +842,7 @@ class EL_OT_compare(bpy.types.Operator):
             mesh = obj.data.copy()
             mesh.name = f"{obj.data.name}_cmp_{br.name}"
             path = _branch_path(stack, bi)
-            warns, _ = _rebuild_mesh(stack, path, mesh)
+            warns, _ = _rebuild_mesh(stack, path, stack.base_mesh, mesh)
             total_warnings += len(warns)
 
             dup = obj.copy()
@@ -919,7 +921,7 @@ class EL_OT_rebuild(bpy.types.Operator):
     def execute(self, context):
         if _guard_shape_keys(self, context):
             return {"CANCELLED"}
-        warnings = _rebuild(context.object)
+        warnings = _rebuild(context.object, rebuild_br_base_mesh=True)
         if warnings:
             self.report({"WARNING"}, _T("Rebuilt ({count} warnings)").format(count=len(warnings)))
         else:
@@ -947,6 +949,12 @@ class EL_OT_detach(bpy.types.Operator):
         stack.base_mesh = None
         if base and base.users <= 1:
             bpy.data.meshes.remove(base)
+
+        for br in stack.branches:
+            base = br.base_mesh
+            br.base_mesh = None
+            if base and base.users <= 1:
+                bpy.data.meshes.remove(base)
 
         stack.layers.clear()
         stack.branches.clear()

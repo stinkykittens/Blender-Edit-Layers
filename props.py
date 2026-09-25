@@ -49,7 +49,7 @@ def _on_branch_switch(self, context):
             and not _is_dirty(obj)
             and not _has_shape_keys(obj)
         ):
-            _rebuild(obj)
+            _rebuild(obj, rebuild_br_base_mesh=True)
 
 
 def _set_enabled(self, v):
@@ -118,8 +118,11 @@ class EL_Branch(bpy.types.PropertyGroup):
         max=1.0,
         default=(0.7, 0.7, 0.7),
     )
+    # Optimize rebuild times by caching the mesh where the branch starts 
+    override_base_mesh: BoolProperty(name="Override Base Mesh", default=False, update=_on_enabled_update)
+    base_mesh: PointerProperty(type=bpy.types.Mesh)
     data_obj: StringProperty(name="Data Object", default="")
-    data_transfer_mode: EnumProperty(name="Data Transfer Mode", 
+    data_transfer_mode: EnumProperty(name="Data Transfer Mode",
         description="Set mapping mode for data transfer.",
         items=[("NEAREST", "Nearest", "Set Data Transfer Mode.\nDefault behaviour."),
         ("TOPOLOGY", "Topology", "Set Data Transfer Mode.\nUseful when topology stays unchanged e.g. for sculpting.")],
