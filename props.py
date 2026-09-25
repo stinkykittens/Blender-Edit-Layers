@@ -132,11 +132,7 @@ class EL_Branch(bpy.types.PropertyGroup):
         max=1.0,
         default=(0.7, 0.7, 0.7),
     )
-    # Optimize rebuild times by caching the mesh where the branch starts 
-    override_base_mesh: BoolProperty(name="Override Base Mesh", default=False, update=_branch_update)
     tmp_base_mesh_uid: IntProperty(default=-1, update=_branch_update)
-    base_mesh: PointerProperty(type=bpy.types.Mesh)
-    unique_base_mesh: BoolProperty(default=False)
     data_obj: StringProperty(name="Data Object", default="")
     data_transfer_mode: EnumProperty(name="Data Transfer Mode",
         description="Set mapping mode for data transfer.",

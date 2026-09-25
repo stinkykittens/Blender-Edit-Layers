@@ -192,22 +192,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
     path = _branch_path(stack, branch_index)
     base_mesh = stack.base_mesh
 
-    # Set Base Mesh and Path to support branch base meshes and temporary base meshes
-    if branch.override_base_mesh:
-        if (branch.base_mesh == None or rebuild_br_base_meshes) and not branch.unique_base_mesh:
-            branch_path = []
-            for l in path:
-                if _is_overriden(stack, branch_index, l.uid, False):
-                    branch_path.append(l)
-            branch.base_mesh = stack.base_mesh.copy()
-            _rebuild_mesh(stack, branch_path, stack.base_mesh, branch.base_mesh)
-        if branch.tmp_base_mesh_uid == -1:
-            branch_path = []
-            for l in path:
-                if not _is_overriden(stack, branch_index, l.uid, False):
-                    branch_path.append(l)
-            path = branch_path
-            base_mesh = branch.base_mesh
+    # Set Base Mesh and Path to support temporary base meshes
     if branch.tmp_base_mesh_uid != -1:
         if stack.tmp_base_mesh == None or stack.tmp_base_mesh_uid != branch.tmp_base_mesh_uid or rebuild_br_base_meshes:
             branch_path = []

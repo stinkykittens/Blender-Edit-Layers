@@ -1149,6 +1149,7 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
         br.unique_base_mesh = True
         br.name = f"Branch {len(stack.branches)}"
         _assign_branch_color(stack, br)
+        mesh = None
 
         if self.mode == "SELECTED":
             if len(bpy.context.selected_objects) < 2:
@@ -1156,20 +1157,20 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
             selection = bpy.context.selected_objects
             _transform_apply_and_reselect(selection[1])
             br.name = selection[1].name
-            br.base_mesh = selection[1].data
+            mesh = selection[1].data
             bpy.data.objects.remove(selection[1])
         elif self.mode == "AUTOREMESH":
             bpy.ops.object.autoremesher_bridge_remesh_active()
             remesh = context.object
             _transform_apply_and_reselect(remesh)
-            br.base_mesh = remesh.data
+            mesh = remesh.data
             br.name = stack.branches[stack.active_branch].name + "_remesh"
             obj.select_set(True)
             bpy.context.view_layer.objects.active = obj
             bpy.data.objects.remove(remesh)
 
         stack.active_branch = len(stack.branches) - 1  # the update callback rebuilds
+        obj.data = mesh
+        bpy.ops.edit_layers.adopt()
 
         return {"FINISHED"}
-
-    
