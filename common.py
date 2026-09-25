@@ -1,5 +1,6 @@
 """Constants and session state (caches shared across modules)"""
 
+import bpy
 
 # Attribute name storing the persistent vertex ID (0 = unassigned)
 ID_ATTR = "el_id"

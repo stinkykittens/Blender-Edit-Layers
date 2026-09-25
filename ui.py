@@ -118,8 +118,8 @@ class EL_MT_layer_menu(bpy.types.Menu):
         if layer.has_mix_slider:
             layout.prop(layer, "factor_min")
             layout.prop(layer, "factor_max")
-        if context.object.edit_layers.branches[context.object.edit_layers.active_branch].override_base_mesh:
-            layout.prop(layer, "is_branch_base_mesh")
+        if _layer_branches(context.object.edit_layers, layer.uid)[0] == context.object.edit_layers.active_branch:
+            layout.prop(layer, "override_base_mesh")
 
 class EL_MT_branch_menu(bpy.types.Menu):
     """Extra layer operations shown next to the layer list"""
@@ -192,7 +192,7 @@ class EL_UL_layers(bpy.types.UIList):
                 expand=True
             )
         branch = stack.branches[stack.active_branch]
-        if branch.override_base_mesh and branch.base_mesh_layer == item.uid:
+        if branch.tmp_base_mesh_uid == item.uid:
             ind = right.row(align=True)
             ind.ui_units_x = 0.5
             ind.template_node_socket(color=(*branch.color, 1.0))

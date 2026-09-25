@@ -90,4 +90,3 @@ def unregister():
     del bpy.types.Object.edit_layers
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-

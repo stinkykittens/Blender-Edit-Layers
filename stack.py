@@ -41,7 +41,7 @@ def _ensure_branches(stack):
     stack.active_branch = 0
 
 
-def _branch_path(stack, branch_index=None, override_base_mesh=False):
+def _branch_path(stack, branch_index=None):
     """Walk from the branch head to the root; return layers in root-to-head order"""
     if branch_index is None:
         branch_index = stack.active_branch
@@ -54,8 +54,6 @@ def _branch_path(stack, branch_index=None, override_base_mesh=False):
         seen.add(uid)
         layer = by_uid[uid]
         path.append(layer)
-        if override_base_mesh and (uid == stack.branches[branch_index].base_mesh_layer or branch_index != _layer_branches(stack, uid)[0]):
-            break
         uid = layer.parent
     path.reverse()
     return path
@@ -168,7 +166,7 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False, rebuild_br_base_mesh=False):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False, rebuild_br_base_meshes=False):
     """Rebuild the object from the active (or given) branch"""
 
     if bpy.context.object.mode == "EDIT":
@@ -194,22 +192,38 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
     path = _branch_path(stack, branch_index)
     base_mesh = stack.base_mesh
 
+    # Set Base Mesh and Path to support branch base meshes and temporary base meshes
     if branch.override_base_mesh:
-        if (branch.base_mesh == None or rebuild_br_base_mesh) and branch.head_uid != 0:
+        if (branch.base_mesh == None or rebuild_br_base_meshes) and not branch.unique_base_mesh:
             branch_path = []
             for l in path:
-                if _is_overriden(stack, branch_index, l.uid):
+                if _is_overriden(stack, branch_index, l.uid, False):
                     branch_path.append(l)
             branch.base_mesh = stack.base_mesh.copy()
-            _rebuild_mesh(stack, branch_path, base_mesh, branch.base_mesh)
-        base_mesh = branch.base_mesh
+            _rebuild_mesh(stack, branch_path, stack.base_mesh, branch.base_mesh)
+        if branch.tmp_base_mesh_uid == -1:
+            branch_path = []
+            for l in path:
+                if not _is_overriden(stack, branch_index, l.uid, False):
+                    branch_path.append(l)
+            path = branch_path
+            base_mesh = branch.base_mesh
+    if branch.tmp_base_mesh_uid != -1:
+        if stack.tmp_base_mesh == None or stack.tmp_base_mesh_uid != branch.tmp_base_mesh_uid or rebuild_br_base_meshes:
+            branch_path = []
+            for l in path:
+                if _is_overriden(stack, branch_index, l.uid, True):
+                    branch_path.append(l)
+                    stack.tmp_base_mesh_uid = l.uid
+            stack.tmp_base_mesh = stack.base_mesh.copy()
+            _rebuild_mesh(stack, branch_path, stack.base_mesh, stack.tmp_base_mesh)
         branch_path = []
         for l in path:
-            if not _is_overriden(stack, branch_index, l.uid):
+            if not _is_overriden(stack, branch_index, l.uid, True):
                 branch_path.append(l)
-            print ("jj"+str(l.uid)+str(_is_overriden(stack, branch_index, l.uid)))
         path = branch_path
-        base_mesh = branch.base_mesh
+        base_mesh = stack.tmp_base_mesh
+
     
     warnings, applied = _rebuild_mesh(stack, path, base_mesh, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
@@ -227,14 +241,14 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             bpy.data.meshes.remove(mesh)
     return warnings
 
-def _is_overriden(stack, branch_index, uid):
+def _is_overriden(stack, branch_index, uid, tmp):
     if branch_index != _layer_branches(stack, uid)[0]:
         return True
-    if stack.branches[branch_index].base_mesh_layer != -1:
+    if tmp and stack.branches[branch_index].tmp_base_mesh_uid != -1:
         # Go through every parent of the branch
         layer = next((l for l in stack.layers if uid == l.uid), None)
         while layer and branch_index == _layer_branches(stack, layer.uid)[0]:
-            if stack.branches[branch_index].base_mesh_layer == layer.parent:
+            if stack.branches[branch_index].tmp_base_mesh_uid == layer.parent:
                 return False
             layer = next((l for l in stack.layers if layer.parent == l.uid), None)
         return True
@@ -467,10 +481,19 @@ def _bake_mesh(obj):
             bpy.data.objects.remove(copy)
             bpy.data.meshes.remove(mesh)
 
-    base = stack.base_mesh
+    # Remove mesh data
+    mesh = stack.base_mesh
     stack.base_mesh = None
-    if base and base.users <= 1:
-        bpy.data.meshes.remove(base)
+    if mesh and mesh.users <= 1:
+        bpy.data.meshes.remove(mesh)
+    mesh = stack.tmp_base_mesh
+    stack.tmp_base_mesh = None
+    if mesh and mesh.users <= 1:
+        bpy.data.meshes.remove(mesh)
+    for br in stack.branches:
+        mesh = br.base_mesh
+        if mesh and mesh.users <= 1:
+            bpy.data.meshes.remove(mesh)
 
     stack.layers.clear()
     stack.branches.clear()

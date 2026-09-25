@@ -921,7 +921,7 @@ class EL_OT_rebuild(bpy.types.Operator):
     def execute(self, context):
         if _guard_shape_keys(self, context):
             return {"CANCELLED"}
-        warnings = _rebuild(context.object, rebuild_br_base_mesh=True)
+        warnings = _rebuild(context.object, rebuild_br_base_meshes=True)
         if warnings:
             self.report({"WARNING"}, _T("Rebuilt ({count} warnings)").format(count=len(warnings)))
         else:
@@ -1146,6 +1146,7 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
         br = stack.branches.add()
         br.override_base_mesh = True
         br.head_uid = 0
+        br.unique_base_mesh = True
         br.name = f"Branch {len(stack.branches)}"
         _assign_branch_color(stack, br)
 
