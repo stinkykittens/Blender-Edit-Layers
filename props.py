@@ -13,7 +13,7 @@ from bpy.props import (
     EnumProperty,
 )
 
-from .stack import _has_shape_keys, _is_dirty, _rebuild
+from .stack import _has_shape_keys, _is_dirty, _layer_branches, _rebuild
 
 
 def _tag_redraw_view3d(context):
@@ -38,7 +38,7 @@ def _on_enabled_update(self, context):
             _rebuild(obj)
 
 
-def _on_branch_switch(self, context):
+def _branch_update(self, context):
     obj = context.object
     if obj and obj.type == "MESH":
         stack = obj.edit_layers
@@ -82,6 +82,19 @@ def _get_has_foldable_children(self):
             return True
     return False
 
+def _is_branch_base_mesh(self):
+    stack = bpy.context.object.edit_layers
+    return stack.branches[stack.active_branch].base_mesh_layer == self.uid
+
+def _set_is_branch_base_mesh(self, v):
+    stack = bpy.context.object.edit_layers
+
+    if stack.branches[stack.active_branch].base_mesh_layer == self.uid and not v:
+        stack.branches[stack.active_branch].base_mesh_layer = -1
+    elif v and _layer_branches(stack, self.uid)[0] == stack.active_branch:
+        stack.branches[stack.active_branch].base_mesh_layer = self.uid
+
+
 #TODO: a way to delete vertexes from the data; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
@@ -103,6 +116,7 @@ class EL_Layer(bpy.types.PropertyGroup):
     data: StringProperty(default="") #TODO: pinned vertices; deformation strenght
 
     internal_enabled: BoolProperty(default=True)
+    is_branch_base_mesh: BoolProperty(name="Branch Base Mesh", get=_is_branch_base_mesh, set=_set_is_branch_base_mesh)
 
 
 class EL_Branch(bpy.types.PropertyGroup):
@@ -119,7 +133,8 @@ class EL_Branch(bpy.types.PropertyGroup):
         default=(0.7, 0.7, 0.7),
     )
     # Optimize rebuild times by caching the mesh where the branch starts 
-    override_base_mesh: BoolProperty(name="Override Base Mesh", default=False, update=_on_enabled_update)
+    override_base_mesh: BoolProperty(name="Override Base Mesh", default=False, update=_branch_update)
+    base_mesh_layer: IntProperty(default=-1, update=_branch_update)
     base_mesh: PointerProperty(type=bpy.types.Mesh)
     data_obj: StringProperty(name="Data Object", default="")
     data_transfer_mode: EnumProperty(name="Data Transfer Mode",
@@ -134,7 +149,7 @@ class EL_Stack(bpy.types.PropertyGroup):
     layers: CollectionProperty(type=EL_Layer)
     active_index: IntProperty(default=0)
     branches: CollectionProperty(type=EL_Branch)
-    active_branch: IntProperty(default=0, update=_on_branch_switch)
+    active_branch: IntProperty(default=0, update=_branch_update)
     # Next vertex ID to assign (0 means unassigned, so start from 1)
     next_id: IntProperty(default=1)
     # Next layer UID to assign

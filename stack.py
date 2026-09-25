@@ -41,7 +41,7 @@ def _ensure_branches(stack):
     stack.active_branch = 0
 
 
-def _branch_path(stack, branch_index=None):
+def _branch_path(stack, branch_index=None, override_base_mesh=False):
     """Walk from the branch head to the root; return layers in root-to-head order"""
     if branch_index is None:
         branch_index = stack.active_branch
@@ -54,6 +54,8 @@ def _branch_path(stack, branch_index=None):
         seen.add(uid)
         layer = by_uid[uid]
         path.append(layer)
+        if override_base_mesh and (uid == stack.branches[branch_index].base_mesh_layer or branch_index != _layer_branches(stack, uid)[0]):
+            break
         uid = layer.parent
     path.reverse()
     return path
@@ -173,7 +175,9 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         return []
 
     stack = obj.edit_layers
-    branch = stack.branches[stack.active_branch if branch_index is None else branch_index]
+    if branch_index is None:
+        branch_index = stack.active_branch
+    branch = stack.branches[branch_index]
 
     if transfer_data:
         # Get origiginal mesh or data object so otherwise lost data e.g. vertex groups get recover
@@ -194,20 +198,18 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         if branch.base_mesh == None or rebuild_br_base_mesh:
             branch_path = []
             for l in path:
-                if branch != stack.branches[_layer_branches(stack, l.uid)[0]]:
+                if _is_overriden(stack, branch_index, l.uid):
                     branch_path.append(l)
             branch.base_mesh = stack.base_mesh.copy()
             _rebuild_mesh(stack, branch_path, base_mesh, branch.base_mesh)
         base_mesh = branch.base_mesh
         branch_path = []
         for l in path:
-            if branch == stack.branches[_layer_branches(stack, l.uid)[0]]:
+            if not _is_overriden(stack, branch_index, l.uid):
                 branch_path.append(l)
+            print ("jj"+str(l.uid)+str(_is_overriden(stack, branch_index, l.uid)))
         path = branch_path
         base_mesh = branch.base_mesh
-    
-    for l in path:
-        print(l.uid)
     
     warnings, applied = _rebuild_mesh(stack, path, base_mesh, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
@@ -225,6 +227,18 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             bpy.data.meshes.remove(mesh)
     return warnings
 
+def _is_overriden(stack, branch_index, uid):
+    if branch_index != _layer_branches(stack, uid)[0]:
+        return True
+    if stack.branches[branch_index].base_mesh_layer != -1:
+        # Go through every parent of the branch
+        layer = next((l for l in stack.layers if uid == l.uid), None)
+        while layer and branch_index == _layer_branches(stack, layer.uid)[0]:
+            if stack.branches[branch_index].base_mesh_layer == layer.parent:
+                return False
+            layer = next((l for l in stack.layers if layer.parent == l.uid), None)
+        return True
+    return False
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
     #TODO: Use bpy.ops.object.data_transfer instead of the modifier

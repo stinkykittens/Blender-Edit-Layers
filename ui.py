@@ -117,6 +117,7 @@ class EL_MT_layer_menu(bpy.types.Menu):
         if layer.has_mix_slider:
             layout.prop(layer, "factor_min")
             layout.prop(layer, "factor_max")
+        layout.prop(layer, "is_branch_base_mesh")
 
 
 class EL_UL_layers(bpy.types.UIList):
@@ -178,6 +179,11 @@ class EL_UL_layers(bpy.types.UIList):
                 slider=True,
                 expand=True
             )
+        branch = stack.branches[stack.active_branch]
+        if branch.override_base_mesh and branch.base_mesh_layer == item.uid:
+            ind = right.row(align=True)
+            ind.ui_units_x = 0.5
+            ind.template_node_socket(color=(*branch.color, 1.0))
         right.prop(
             item,
             "enabled",
@@ -185,7 +191,6 @@ class EL_UL_layers(bpy.types.UIList):
             icon="HIDE_OFF" if item.enabled else "HIDE_ON",
             emboss=False,
         )
-        right.label(text=str(item.uid)) #TODO: Remove
 
     def filter_items(self, context, data, propname):
         stack = data
