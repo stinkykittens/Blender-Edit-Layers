@@ -117,7 +117,8 @@ class EL_MT_layer_menu(bpy.types.Menu):
         if layer.has_mix_slider:
             layout.prop(layer, "factor_min")
             layout.prop(layer, "factor_max")
-        layout.prop(layer, "is_branch_base_mesh")
+        if context.object.edit_layers.branches[context.object.edit_layers.active_branch].override_base_mesh:
+            layout.prop(layer, "is_branch_base_mesh")
 
 
 class EL_UL_layers(bpy.types.UIList):
