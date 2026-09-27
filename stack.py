@@ -246,7 +246,7 @@ def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
     modifier.object = source_obj
     modifier.use_vert_data = True
     modifier.use_loop_data = True
-    modifier.data_types_verts = { 'VGROUP_WEIGHTS' }
+    modifier.data_types_verts = { 'VGROUP_WEIGHTS', "COLOR_VERTEX" }
     modifier.data_types_loops = { 'COLOR_CORNER', 'UV' } # 'CUSTOM_NORMAL' might be desired to include
     if _active_branch_has_data_obj(obj) and br.data_transfer_mode == "TOPOLOGY":
         modifier.vert_mapping = "TOPOLOGY"
@@ -475,10 +475,6 @@ def _bake_mesh(obj):
     stack.tmp_base_mesh = None
     if mesh and mesh.users <= 1:
         bpy.data.meshes.remove(mesh)
-    for br in stack.branches:
-        mesh = br.base_mesh
-        if mesh and mesh.users <= 1:
-            bpy.data.meshes.remove(mesh)
 
     stack.layers.clear()
     stack.branches.clear()

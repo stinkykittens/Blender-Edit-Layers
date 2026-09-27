@@ -171,5 +171,6 @@ class EL_Stack(bpy.types.PropertyGroup):
     bake_with_shape_keys: BoolProperty()
     shade_smooth: BoolProperty(name="Shade Smooth", default=False, update=_on_enabled_update, description="Apply smooth shading after rebuilding the stack.")
     show_layers_of_previous_branches: BoolProperty()
+    remesh_mode: EnumProperty(items=[("AUTO_REMESHER", "Auto Remesher", ""), ("VOXEL", "Voxel", "")], default="AUTO_REMESHER")
     tmp_base_mesh_uid: IntProperty(default=-1)
     tmp_base_mesh: PointerProperty(type=bpy.types.Mesh)

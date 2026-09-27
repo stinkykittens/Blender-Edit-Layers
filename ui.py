@@ -122,14 +122,12 @@ class EL_MT_layer_menu(bpy.types.Menu):
             layout.prop(layer, "override_base_mesh")
 
 class EL_MT_branch_menu(bpy.types.Menu):
-    """Extra layer operations shown next to the layer list"""
-
     bl_idname = "EL_MT_branch_menu"
     bl_label = "Branch Operations"
 
     def draw(self, context):
         layout = self.layout
-        layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Auto Remesher", icon="TRIA_UP_BAR").mode = "AUTOREMESH"
+        layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Auto Remesher", icon="TRIA_UP_BAR").mode = "REMESH"
         layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Selected", icon="IMPORT").mode = "SELECTED"
 
 class EL_UL_layers(bpy.types.UIList):
@@ -260,7 +258,47 @@ class EL_UL_branches(bpy.types.UIList):
             sub.label(text=_T("shared {shared} + own {own}").format(shared=shared, own=own))
         else:
             sub.label(text=_T("{count} layers").format(count=len(_branch_path(stack, index))))
-        sub.label(text=str(item.head_uid)) #TODO: Remove
+
+class EL_PT_remesh_branch(bpy.types.Panel):
+    bl_idname = "EL_PT_remesh_branch"
+    bl_label = "Remesh Branch"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Edit Layers"
+
+    def draw(self, context):
+        
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False
+        row = layout.row()
+
+        mesh = context.object.data
+        stack = context.object.edit_layers
+
+        if not stack.initialized:
+            return
+        
+        row.prop(stack, "remesh_mode", text="Mode", expand=True)
+        col = layout.column()
+        if stack.remesh_mode == 'VOXEL':
+            col.prop(mesh, "remesh_voxel_size")
+            col.prop(mesh, "remesh_voxel_adaptivity")
+            col.prop(mesh, "use_remesh_fix_poles")
+            col = layout.column(heading="Preserve")
+            col.prop(mesh, "use_remesh_preserve_volume", text="Volume")
+            col.prop(mesh, "use_remesh_preserve_attributes", text="Attributes")
+        elif stack.remesh_mode == "AUTO_REMESHER":
+            settings = context.scene.autoremesher_bridge_settings
+            layout.prop(settings, "target_quads")
+            layout.prop(settings, "adaptivity")
+            layout.prop(settings, "edge_scaling")
+            layout.prop(settings, "sharp_edge")
+            layout.prop(settings, "smooth_normal")
+            layout.separator()
+            layout.prop(settings, "apply_modifiers")
+            layout.prop(settings, "transfer_uvs")
+        layout.operator(EL_OT_create_unique_branch.bl_idname, text="Remesh").mode = "REMESH"
 
 class EL_PT_panel(bpy.types.Panel):
     bl_label = "Edit Layers"
@@ -380,6 +418,7 @@ class EL_PT_panel(bpy.types.Panel):
         # Layers (path of the active branch)
         col = layout.column()
         hdr = col.row(align=True)
+
         if stack.branches:
             br_name = stack.branches[
                 max(0, min(stack.active_branch, len(stack.branches) - 1))

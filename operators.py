@@ -1128,7 +1128,7 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
     mode: EnumProperty(
             name="Mode",
             items=[
-                ("AUTOREMESH", "", ""),
+                ("REMESH", "", ""),
                 ("SELECTED", "", ""),
             ],
             default="SELECTED",
@@ -1159,8 +1159,12 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
             br.name = selection[1].name
             mesh = selection[1].data
             bpy.data.objects.remove(selection[1])
-        elif self.mode == "AUTOREMESH":
-            bpy.ops.object.autoremesher_bridge_remesh_active()
+        elif self.mode == "REMESH":
+            if stack.remesh_mode == "VOXEL":
+                bpy.ops.edit_layers.bake_copy()
+                bpy.ops.object.voxel_remesh()
+            else:
+                bpy.ops.object.autoremesher_bridge_remesh_active()
             remesh = context.object
             _transform_apply_and_reselect(remesh)
             mesh = remesh.data
