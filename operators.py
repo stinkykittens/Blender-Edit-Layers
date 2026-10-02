@@ -1178,3 +1178,104 @@ class EL_OT_create_unique_branch(bpy.types.Operator):
         bpy.ops.edit_layers.adopt()
 
         return {"FINISHED"}
+
+
+class EL_OT_add_layer_mask(bpy.types.Operator):
+    bl_idname = "edit_layers.add_layer_mask"
+    bl_label = "Add Mask"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+        
+        mask = layer.masks.add()
+
+        return {"FINISHED"}
+
+class EL_OT_remove_layer_mask(bpy.types.Operator):
+    bl_idname = "edit_layers.remove_layer_mask"
+    bl_label = "Remove"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+
+        layer.masks.remove(layer.selected_mask)
+
+        return {"FINISHED"}
+
+class EL_OT_move_layer_mask(bpy.types.Operator):
+    bl_idname = "edit_layers.move_layer_mask"
+    bl_label = "Move Mask"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+    direction: EnumProperty(
+        items=[("UP", "Up", ""), ("DOWN", "Down", "")],
+        default="UP",
+    )
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+
+        # masks = []
+        # for m in layer.masks:
+        #     masks.append(m)
+        # mask = masks.pop(layer.selected_mask)
+        # if self.direction == "UP":
+        #     layer.selected_mask += 1
+        # else:
+        #     layer.selected_mask -= 1
+        # layer.selected_mask = min(0, layer.selected_mask)
+        # masks.insert(layer.selected_mask, mask)
+        # layer.masks.clear()
+        # for m in masks:
+        #     layer.masks.append(m)
+
+        to_index = layer.selected_mask
+        if self.direction == "DOWN":
+            to_index += 1
+        else:
+            to_index -= 1
+        to_index = max(0, min(len(layer.masks) - 1, to_index))
+        layer.masks.move(layer.selected_mask, to_index)
+        layer.selected_mask = to_index
+
+        return {"FINISHED"}

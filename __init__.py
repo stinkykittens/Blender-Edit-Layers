@@ -21,6 +21,7 @@ from . import handlers, i18n, operators, props, ui
 from .stack import _rebuild
 
 classes = (
+    props.EL_LayerMask,
     props.EL_Layer,
     props.EL_Branch,
     props.EL_Stack,
@@ -50,6 +51,10 @@ classes = (
     operators.EL_OT_bake_copy,
     operators.EL_OT_select,
     operators.EL_OT_create_unique_branch,
+    operators.EL_OT_add_layer_mask,
+    operators.EL_OT_remove_layer_mask,
+    operators.EL_OT_move_layer_mask,
+    ui.EL_UL_layer_masks,
     ui.EL_UL_layers,
     ui.EL_UL_branches,
     ui.EL_PT_panel,

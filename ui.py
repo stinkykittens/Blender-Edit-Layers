@@ -3,6 +3,8 @@
 import bpy
 import bmesh
 
+from .props import EL_LayerMask
+
 from .common import _blocked_notice, _last_warnings
 from .i18n import _T
 from .operators import (
@@ -29,6 +31,9 @@ from .operators import (
     EL_OT_record_new,
     EL_OT_stack_init,
     EL_OT_create_unique_branch,
+    EL_OT_add_layer_mask,
+    EL_OT_remove_layer_mask,
+    EL_OT_move_layer_mask,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -130,6 +135,22 @@ class EL_MT_branch_menu(bpy.types.Menu):
         layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Auto Remesher", icon="TRIA_UP_BAR").mode = "REMESH"
         layout.operator(EL_OT_create_unique_branch.bl_idname, text="New Branch From Selected", icon="IMPORT").mode = "SELECTED"
 
+class EL_UL_layer_masks(bpy.types.UIList):
+    use_filter_show = False
+    """Radio buttons mark the active branch; shared/own layer counts on the right"""
+
+    def draw_item(
+        self, context, layout: bpy.types.UILayout, data, item: EL_LayerMask, icon,
+        active_data, active_propname, index=0, flt_flag=0,
+    ):
+        row = layout.row(align=True)
+        row.prop(item,"enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
+        row.separator(factor=3)
+        row.prop(item, "mix", text="", slider=True)
+        row.prop(item, "mix_mode", text="")
+        row.prop(item, "max_value")
+
+    
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
 
@@ -144,16 +165,17 @@ class EL_UL_layers(bpy.types.UIList):
     ):
         stack = data
         multi = len(stack.branches) > 1
-        row = layout.row(align=True)
+        colum = layout.column()
+        row = colum.row(align=True)
         left = row.row(align=True)
         left.alignment = "LEFT"
 
         if item.has_foldable_children:
             left.prop(item, "is_folded", icon_only=True, emboss=False, icon=("RIGHTARROW_THIN" if item.is_folded else "DOWNARROW_HLT"))
-        elif item.disable_with_parent:
-            left.separator(factor=4)
+        # elif item.disable_with_parent:
+        #     left.separator(factor=4)
         
-        left.prop(item, "name", text="", emboss=False)
+        left.prop(item, "name", text=" | " + item.name if item.disable_with_parent else item.name, emboss=False)
 
         right = row.row(align=True)
         right.alignment = "RIGHT"
@@ -201,6 +223,51 @@ class EL_UL_layers(bpy.types.UIList):
             icon="HIDE_OFF" if item.enabled else "HIDE_ON",
             emboss=False,
         )
+        right.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
+        
+        if not item.is_collapsed:
+            row = colum.row(align=True)
+            row.separator(factor=3)
+            row.prop(item, "is_collapsed", icon="TRIA_UP", icon_only=True, emboss=False, expand=True)
+            row.scale_y = 0.5
+            row.alignment = "CENTER"
+            row = colum.row(align=True)
+            if item.disable_with_parent:
+                row.separator(factor=1)
+            row.alignment = "EXPAND"
+            row.scale_y = 2
+            row.scale_x = 1
+            row.prop(item, "disable_with_parent", icon="ARROW_LEFTRIGHT", icon_only=True, emboss=False, expand=True)
+            sub_colum = row.column(align=True)
+            sub_colum.scale_y = 0.5
+            sub_colum.scale_x = 1
+            sub_row = sub_colum.row(align=True)
+            if item.has_mix_slider:
+                sub_row.prop(item, "has_mix_slider", icon="CENTER_ONLY", icon_only=True)
+                sub_row.prop(item, "factor_min")
+                sub_row.prop(item, "factor_max")
+            else:
+                sub_row.prop(item, "has_mix_slider", icon="CENTER_ONLY")
+
+            if _layer_branches(context.object.edit_layers, item.uid)[0] == context.object.edit_layers.active_branch:
+                sub_row.prop(item, "override_base_mesh", icon="MESH_DATA", icon_only=True)
+            # Masking
+            sub_row = sub_colum.row(align=True)
+            sub_row.operator(EL_OT_add_layer_mask.bl_idname, icon="ADD").uid = item.uid
+
+            if len(item.masks) > 0:
+                sub_row.operator(EL_OT_remove_layer_mask.bl_idname, icon="REMOVE").uid = item.uid
+                op = sub_row.operator(EL_OT_move_layer_mask.bl_idname, icon="TRIA_UP", text="")
+                op.uid = item.uid
+                op.direction = "UP"
+                op = sub_row.operator(EL_OT_move_layer_mask.bl_idname, icon="TRIA_DOWN", text="")
+                op.uid = item.uid
+                op.direction = "DOWN"
+            
+                sub_row = sub_colum.row(align=True)
+                sub_colum.template_list("EL_UL_layer_masks", "", item, "masks", item, "selected_mask", rows=2)
+            
+
 
     def filter_items(self, context, data, propname):
         stack = data
@@ -278,7 +345,7 @@ class EL_PT_remesh_branch(bpy.types.Panel):
 
         if not stack.initialized:
             return
-        
+
         row.prop(stack, "remesh_mode", text="Mode", expand=True)
         col = layout.column()
         if stack.remesh_mode == 'VOXEL':

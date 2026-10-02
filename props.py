@@ -95,17 +95,26 @@ def _set_override_base_mesh(self, v):
         stack.branches[stack.active_branch].tmp_base_mesh_uid = self.uid
 
 
-#TODO: a way to delete vertexes from the data; add empty layer; Branch unique slider
+class EL_LayerMask(bpy.types.PropertyGroup):
+    enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
+    mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
+    max_value: FloatProperty(name="Max", min=0, default=1, update=_on_enabled_update)
+    mix_mode: EnumProperty(name="Mix Mode", items=[("ADD", "Add", ""), ("SUBTRACT", "Sub", ""), ("MULTIPLY", "Mul", "")], default="MULTIPLY")
+    data: StringProperty(default="")
+
+#TODO: a way to delete vertexes from the data or edit its anchors; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
     name: StringProperty(name="Name", default="Layer")
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update, get=_get_enabled, set=_set_enabled)
     mix_factor: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
-    has_mix_slider: BoolProperty(name="Has Slider", default=False)
+    has_mix_slider: BoolProperty(name="Has Mix Slider", default=False)
     factor_min: FloatProperty(name="Factor Min", default=0, update=_on_enabled_update)
     factor_max: FloatProperty(name="Factor Max", default=1, update=_on_enabled_update)
     disable_with_parent: BoolProperty(name="Disable with parent", default=False)
     has_foldable_children: BoolProperty(get=_get_has_foldable_children)
+    # Refers to preventing child layers from being visable
     is_folded: BoolProperty(default=False)
+    is_collapsed: BoolProperty(default=False)
     # Persistent layer UID (separate from vertex IDs; 0 = unassigned)
     uid: IntProperty(default=0)
     # UID of the parent layer (0 = directly on the base mesh)
@@ -113,7 +122,10 @@ class EL_Layer(bpy.types.PropertyGroup):
     # UID of the parent or grand parent this layer expands/folds and disables with
     hierarchy_parent: IntProperty(default=0, get=_get_hierarchy_parent)
     # Diff JSON
-    data: StringProperty(default="") #TODO: pinned vertices; deformation strenght
+    data: StringProperty(default="")
+
+    masks: CollectionProperty(type=EL_LayerMask)
+    selected_mask: IntProperty(default=0)
 
     internal_enabled: BoolProperty(default=True)
     override_base_mesh: BoolProperty(name="Override Base Mesh", get=_get_override_base_mesh, set=_set_override_base_mesh)
