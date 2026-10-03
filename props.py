@@ -104,6 +104,12 @@ def _set_comparing(self, v):
 def _get_comparing(self):
     return self.branches[self.active_branch].is_comparing
 
+def _update_compare(self, context):
+    if self.is_comparing:
+        bpy.ops.edit_layers.compare()
+    else:
+        bpy.ops.edit_layers.compare_clear()
+
 class EL_LayerMask(bpy.types.PropertyGroup):
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
     mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
@@ -163,10 +169,12 @@ class EL_Branch(bpy.types.PropertyGroup):
     exclude_from_comparing: BoolProperty(default=False, name="Exclude from comparing all branches")
     is_comparing: BoolProperty(default=False)
     compare_mode: EnumProperty(name="Compare Mode", 
-            items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", ""), ("TILE_QUAD", "Tile Quad", ""), ("TILE_SINGLE", "Tile Single", "")])
-    compare_branch: IntProperty(default=0)
-    compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0])
-    compare_tile_weld: BoolProperty(default=False)
+            items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", ""), ("TILE_QUAD", "Tile Quad", ""), ("TILE_SINGLE", "Tile Single", "")],
+            update=_update_compare)
+    compare_branch: IntProperty(default=0, update=_update_compare)
+    compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0], update=_update_compare)
+    compare_tile_weld: BoolProperty(default=False, update=_update_compare)
+    compare_tile_boolean_exact: BoolProperty(default=False, update=_update_compare)
 
 
 class EL_Stack(bpy.types.PropertyGroup):

@@ -926,6 +926,9 @@ class EL_OT_compare(bpy.types.Operator):
                 boolean.show_in_editmode = True
                 boolean.operation = "UNION"
                 boolean.object = o
+                if not branch.compare_tile_boolean_exact:
+                    boolean.solver = "FLOAT"
+                    boolean.double_threshold = 0
             boolean.collection = stack.compare_collection
             weld = obj.modifiers.new(MOD_TILE_WELD, 'WELD')
             weld.show_in_editmode = True

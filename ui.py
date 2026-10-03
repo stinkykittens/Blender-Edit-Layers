@@ -483,6 +483,8 @@ class EL_PT_panel(bpy.types.Panel):
             sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
         elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
             sub_row.prop(branch, "compare_tile_weld", icon="AUTOMERGE_OFF", icon_only=True)
+            if branch.compare_tile_weld:
+                sub_row.prop(branch, "compare_tile_boolean_exact", icon="MOD_BOOLEAN", icon_only=True)
         if branch.is_comparing:
             sub_row.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
             sub = col.row(align=True)
