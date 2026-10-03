@@ -825,51 +825,55 @@ class EL_OT_compare(bpy.types.Operator):
             return False
         return len(context.object.edit_layers.branches) > 1
 
+    def add_comparison(self, branch_index, n):
+        obj = bpy.context.object
+        stack = obj.edit_layers
+        branch = stack.branches[branch_index]
+        active_branch = stack.branches[stack.active_branch]
+
+        mesh = obj.data.copy()
+        mesh.name = f"{obj.data.name}_cmp_{branch.name}"
+        path = _branch_path(stack, branch_index)
+        _rebuild_mesh(stack, path, stack.base_mesh, mesh)
+        
+        dup = obj.copy()
+        dup.data = mesh
+        dup.name = f"{obj.name} [{branch.name}]"
+        # Comparison copies must not carry a stack of their own
+        ds = dup.edit_layers
+        ds.initialized = False
+        ds.is_recording = False
+        ds.base_mesh = None
+        ds.layers.clear()
+        ds.branches.clear()
+        dup[COMPARE_PROP] = obj.name
+        dup.location = obj.location.copy()
+        dup.location.x += active_branch.compare_offset[0] * n
+        dup.location.y += active_branch.compare_offset[1] * n
+        dup.location.z += active_branch.compare_offset[2] * n
+        bpy.context.collection.objects.link(dup)
+        _compare_names.add(dup.name)
+
     def execute(self, context):
         if _guard_shape_keys(self, context):
             return {"CANCELLED"}
         obj = context.object
         stack = obj.edit_layers
-        stack.is_comparing = True
+        branch = stack.branches[stack.active_branch]
         _clear_compares(obj)
 
-        offset = max(obj.dimensions.x * 1.5, 2.0)
-        n = 1
-        total_warnings = 0
-        for bi, br in enumerate(stack.branches):
-            if bi == stack.active_branch:
-                continue
-            mesh = obj.data.copy()
-            mesh.name = f"{obj.data.name}_cmp_{br.name}"
-            path = _branch_path(stack, bi)
-            warns, _ = _rebuild_mesh(stack, path, stack.base_mesh, mesh)
-            total_warnings += len(warns)
+        if branch.compare_mode == "ALL":
+            n = 1
+            for bi, br in enumerate(stack.branches):
+                if bi == stack.active_branch:
+                    continue
+                self.add_comparison(bi, n)
+                n += 1
+        elif branch.compare_mode == "BRANCH":
+            self.add_comparison(branch.compare_branch, 1)
+        elif branch.compare_mode == "TILE":
+            self.add_comparison(stack.active_branch, 1)
 
-            dup = obj.copy()
-            dup.data = mesh
-            dup.name = f"{obj.name} [{br.name}]"
-            # Comparison copies must not carry a stack of their own
-            ds = dup.edit_layers
-            ds.initialized = False
-            ds.is_recording = False
-            ds.base_mesh = None
-            ds.layers.clear()
-            ds.branches.clear()
-            dup[COMPARE_PROP] = obj.name
-            dup.location = obj.location.copy()
-            dup.location.x += offset * n
-            context.collection.objects.link(dup)
-            _compare_names.add(dup.name)
-            n += 1
-
-        msg = _T("Duplicated {count} branches for comparison").format(count=n - 1)
-        if total_warnings:
-            self.report(
-                {"WARNING"},
-                msg + _T(" ({count} warnings)").format(count=total_warnings),
-            )
-        else:
-            self.report({"INFO"}, msg)
         return {"FINISHED"}
 class EL_OT_compare_clear(bpy.types.Operator):
     """Delete the comparison duplicates"""
@@ -883,7 +887,6 @@ class EL_OT_compare_clear(bpy.types.Operator):
         return _poll_mesh_object(context)
 
     def execute(self, context):
-        context.object.edit_layers.is_comparing = False
         removed, released = _clear_compares(context.object)
         msg = _T("Removed {count} comparison objects").format(count=removed)
         if released:
@@ -891,6 +894,26 @@ class EL_OT_compare_clear(bpy.types.Operator):
         self.report({"INFO"}, msg)
         return {"FINISHED"}
 
+class EL_OT_reset_compare_offset(bpy.types.Operator):
+    bl_idname = "edit_layers.reset_compare_offset"
+    bl_label = "Reset Offset"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context)
+
+    def execute(self, context):
+        stack = context.object.edit_layers
+        branch = stack.branches[stack.active_branch]
+        if branch.compare_mode == "ALL":
+            branch.compare_offset = (max(context.object.dimensions.x * 1.5, 2.0), 0, 0)
+        elif branch.compare_mode in ["TILE", "TILE_QUAD"]:
+            branch.compare_offset = (2, 2, 0)
+        else:
+            branch.compare_offset = (0, 0, 0)
+        bpy.ops.edit_layers.compare()
+        return {"FINISHED"}
 
 class EL_OT_notice_clear(bpy.types.Operator):
     """Dismiss the blocked shape key notice"""

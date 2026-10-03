@@ -19,7 +19,7 @@ from .operators import (
     EL_OT_cancel,
     EL_OT_commit,
     EL_OT_compare,
-    EL_OT_compare_clear,
+    EL_OT_reset_compare_offset,
     EL_OT_detach,
     EL_OT_layer_merge_down,
     EL_OT_layer_move,
@@ -250,6 +250,7 @@ class EL_UL_layers(bpy.types.UIList):
                 sub_row.prop(item, "has_mix_slider", icon="CENTER_ONLY")
 
             if _layer_branches(context.object.edit_layers, item.uid)[0] == context.object.edit_layers.active_branch:
+                sub_row.separator(factor=2)
                 sub_row.prop(item, "override_base_mesh", icon="MESH_DATA", icon_only=True)
             # Masking
             sub_row = sub_colum.row(align=True)
@@ -339,6 +340,9 @@ class EL_PT_remesh_branch(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False
         row = layout.row()
+
+        if context.object == None:
+            return
 
         mesh = context.object.data
         stack = context.object.edit_layers
@@ -475,10 +479,21 @@ class EL_PT_panel(bpy.types.Panel):
             sub = col.row(align=True)
             if len(stack.branches) > 1 and not stack.is_recording:
                 sub = col.row(align=True)
-                sub.operator(
-                    EL_OT_compare.bl_idname, text="Compare", icon="MOD_MIRROR"
-                )
-                sub.operator(EL_OT_compare_clear.bl_idname, text="Clear", icon="X")
+                sub_row = sub.row(align=True)
+                sub_row.ui_units_x = 8
+                sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
+                sub_row.prop(branch, "compare_mode", text="")
+                if branch.compare_mode == "BRANCH":
+                    sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
+                if branch.is_comparing:
+                    sub = col.row(align=True)
+                    sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
+                    sub.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
+                    sub_row = sub.row(align=True)
+                    sub_row.scale_x = 0.4
+                    sub_row.alignment = "RIGHT"
+                    sub_row.prop(branch, "compare_offset")
+
                 side.separator()
                 side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
 

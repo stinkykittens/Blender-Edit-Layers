@@ -94,6 +94,15 @@ def _set_override_base_mesh(self, v):
     elif v and _layer_branches(stack, self.uid)[0] == stack.active_branch:
         stack.branches[stack.active_branch].tmp_base_mesh_uid = self.uid
 
+def _set_comparing(self, v):
+    self.branches[self.active_branch].is_comparing = v
+    if v:
+        bpy.ops.edit_layers.compare()
+    else:
+        bpy.ops.edit_layers.compare_clear()
+
+def _get_comparing(self):
+    return self.branches[self.active_branch].is_comparing
 
 class EL_LayerMask(bpy.types.PropertyGroup):
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
@@ -151,6 +160,13 @@ class EL_Branch(bpy.types.PropertyGroup):
         items=[("NEAREST", "Nearest", "Set Data Transfer Mode.\nDefault behaviour."),
         ("TOPOLOGY", "Topology", "Set Data Transfer Mode.\nUseful when topology stays unchanged e.g. for sculpting.")],
         default="NEAREST")
+    exclude_from_comparing: BoolProperty(default=False, name="Exclude from comparing all branches")
+    is_comparing: BoolProperty(default=False)
+    compare_mode: EnumProperty(name="Compare Mode", 
+            items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", ""), ("TILE_QUAD", "Tile Quad", ""), ("TILE_SINGLE", "Tile Single", "")])
+    compare_branch: IntProperty(default=0)
+    compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0])
+
 
 
 class EL_Stack(bpy.types.PropertyGroup):
@@ -164,7 +180,6 @@ class EL_Stack(bpy.types.PropertyGroup):
     # Next layer UID to assign
     next_uid: IntProperty(default=1)
     is_recording: BoolProperty(default=False)
-    is_comparing: BoolProperty(default=False)
     is_dirty: BoolProperty(default=False, get=lambda self: _is_dirty(bpy.context.object))
     # UID of the layer being recorded (0 = new layer)
     recording_uid: IntProperty(default=0)
@@ -186,3 +201,4 @@ class EL_Stack(bpy.types.PropertyGroup):
     remesh_mode: EnumProperty(items=[("AUTO_REMESHER", "Auto Remesher", ""), ("VOXEL", "Voxel", "")], default="AUTO_REMESHER")
     tmp_base_mesh_uid: IntProperty(default=-1)
     tmp_base_mesh: PointerProperty(type=bpy.types.Mesh)
+    is_comparing: BoolProperty(set=_set_comparing, get=_get_comparing)
