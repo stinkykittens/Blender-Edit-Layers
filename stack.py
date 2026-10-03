@@ -12,7 +12,6 @@ from .common import (
     COMPARE_PROP,
     ID_ATTR,
     _assign_branch_color,
-    _compare_names,
     _influence_cache,
     _last_state,
     _last_warnings,
@@ -389,30 +388,20 @@ def _guard_shape_keys(op, context):
         return True
     return False
 def _clear_compares(obj):
-    """Delete the comparison duplicates
+    """Delete the comparison duplicates"""
 
-    Only objects this session's compare feature remembers creating
-    (_compare_names) are deleted. Marker-carrying objects we do not recognize
-    (user-made copies of comparison duplicates, or objects loaded from a saved
-    file) are kept; only their marker is removed so they become regular objects.
-    Returns (number removed, number released).
-    """
     removed = 0
-    released = 0
-    for other in list(bpy.data.objects):
-        if other.get(COMPARE_PROP) != obj.name:
-            continue
-        if other.name in _compare_names:
-            _compare_names.discard(other.name)
+    if obj.edit_layers.initialized and obj.edit_layers.compare_collection != None:
+        collection: bpy.types.Collection = obj.edit_layers.compare_collection
+        removed = len(collection.objects)
+        for other in collection.objects:
             mesh = other.data
             bpy.data.objects.remove(other)
             if mesh and mesh.users == 0:
                 bpy.data.meshes.remove(mesh)
-            removed += 1
-        else:
-            del other[COMPARE_PROP]
-            released += 1
-    return removed, released
+        bpy.data.collections.remove(collection)
+        obj.edit_layers.compare_collection = None
+    return removed
 
 def _active_branch_has_data_obj(obj) -> bool:
     br = obj.edit_layers.branches[obj.edit_layers.active_branch]

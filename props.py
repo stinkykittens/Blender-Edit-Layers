@@ -202,3 +202,4 @@ class EL_Stack(bpy.types.PropertyGroup):
     tmp_base_mesh_uid: IntProperty(default=-1)
     tmp_base_mesh: PointerProperty(type=bpy.types.Mesh)
     is_comparing: BoolProperty(set=_set_comparing, get=_get_comparing)
+    compare_collection: PointerProperty(type=bpy.types.Collection)

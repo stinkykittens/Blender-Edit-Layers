@@ -472,7 +472,6 @@ class EL_PT_panel(bpy.types.Panel):
             side.separator()
             sub = col.row(align=True)
             branch = stack.branches[stack.active_branch]
-            sub.prop(branch, "override_base_mesh", icon="MESH_DATA", icon_only=True)
             sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
             if _active_branch_has_data_obj(obj):
                 sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)

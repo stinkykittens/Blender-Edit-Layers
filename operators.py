@@ -13,7 +13,6 @@ from .common import (
     ID_ATTR,
     _assign_branch_color,
     _blocked_notice,
-    _compare_names,
     _last_state,
     _last_warnings,
     _no_key_confirmed,
@@ -816,7 +815,7 @@ class EL_OT_compare(bpy.types.Operator):
     """Duplicate other branches side by side for comparison"""
 
     bl_idname = "edit_layers.compare"
-    bl_label = "Compare Branches Side by Side"
+    bl_label = "Compare Branches"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
@@ -851,8 +850,10 @@ class EL_OT_compare(bpy.types.Operator):
         dup.location.x += active_branch.compare_offset[0] * n
         dup.location.y += active_branch.compare_offset[1] * n
         dup.location.z += active_branch.compare_offset[2] * n
-        bpy.context.collection.objects.link(dup)
-        _compare_names.add(dup.name)
+        if stack.compare_collection == None:
+            stack.compare_collection = bpy.data.collections.new(f"{obj.name}-compares")
+            obj.users_collection[0].children.link(stack.compare_collection)
+        stack.compare_collection.objects.link(dup)
         return dup
 
     def execute(self, context):
@@ -921,10 +922,8 @@ class EL_OT_compare_clear(bpy.types.Operator):
         return _poll_mesh_object(context)
 
     def execute(self, context):
-        removed, released = _clear_compares(context.object)
+        removed = _clear_compares(context.object)
         msg = _T("Removed {count} comparison objects").format(count=removed)
-        if released:
-            msg += _T(" ({count} kept as regular objects)").format(count=released)
         self.report({"INFO"}, msg)
         return {"FINISHED"}
 
@@ -942,7 +941,7 @@ class EL_OT_reset_compare_offset(bpy.types.Operator):
         branch = stack.branches[stack.active_branch]
         if branch.compare_mode == "ALL":
             branch.compare_offset = (max(context.object.dimensions.x * 1.5, 2.0), 0, 0)
-        elif branch.compare_mode in ["TILE", "TILE_QUAD"]:
+        elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
             branch.compare_offset = (2, 2, 0)
         else:
             branch.compare_offset = (0, 0, 0)

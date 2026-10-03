@@ -5,14 +5,13 @@ from bpy.app.handlers import persistent
 
 from .common import (
     _blocked_notice,
-    _compare_names,
     _last_state,
     _last_warnings,
     _no_key_confirmed,
     _recording,
 )
 
-from .stack import _rebuild
+from .stack import _clear_compares, _rebuild
 
 def _rescan_no_keys():
     """Register stack objects currently without shape keys into the confirmed set"""
@@ -55,7 +54,6 @@ def _rescan_no_keys():
 def _el_load_post(_dummy):
     """Reset session state when a file is loaded"""
     _recording.clear()
-    _compare_names.clear()
     _last_warnings.clear()
     _last_state.clear()
     _no_key_confirmed.clear()
@@ -64,6 +62,8 @@ def _el_load_post(_dummy):
     bpy.app.handlers.frame_change_post.append(_animation_update)
     bpy.app.handlers.animation_playback_post.append(_animation_end)
     bpy.app.handlers.animation_playback_pre.append(_animation_start)
+    bpy.app.handlers.save_pre.append(_pre_save)
+    bpy.app.handlers.save_post.append(_post_save)
 
 def _animation_update(scene, depsgraph):
     obj = bpy.context.object
@@ -79,3 +79,12 @@ def _animation_start(scene, depsgraph):
     obj = bpy.context.object
     if obj.edit_layers.enable_animation and obj.type == "MESH" and obj.edit_layers.initialized:
         _rebuild(obj)
+
+def _pre_save(file):
+    for obj in bpy.data.objects:
+        _clear_compares(obj)
+
+def _post_save(file):
+    for obj in bpy.data.objects:
+        if obj.edit_layers.initialized and obj.edit_layers.is_comparing:
+            obj.edit_layers.compare()

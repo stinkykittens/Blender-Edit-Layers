@@ -18,7 +18,7 @@ from bpy.props import PointerProperty
 
 from . import handlers, i18n, operators, props, ui
 
-from .stack import _rebuild
+from .stack import _rebuild, _clear_compares
 
 classes = (
     props.EL_LayerMask,
@@ -85,6 +85,8 @@ def register():
 
 
 def unregister():
+    for obj in bpy.data.objects:
+        _clear_compares(obj)
     ui.unregister_draw_handler()
     try:
         bpy.app.translations.unregister(__name__)

@@ -23,9 +23,6 @@ _last_state = {}
 _no_key_confirmed = set()
 # Notices about blocked shape key additions (object name -> True)
 _blocked_notice = {}
-# Names of duplicates created by the compare feature in this session. The
-# marker (COMPARE_PROP) is copied on object duplication, so only names in this set may be deleted
-_compare_names = set()
 # Counter bumped on every rebuild (invalidates the influence highlight cache)
 _rebuild_serial = [0]
 # Influence highlight cache {"key": tuple, "data": (moved coords, created coords)}
