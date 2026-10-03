@@ -454,47 +454,46 @@ class EL_PT_panel(bpy.types.Panel):
                 )
 
         # Branches
-        if stack.branches:
-            col = layout.column()
-            col.label(
-                text=_T("Branches ({count})").format(count=len(stack.branches)),
-                icon="NODETREE",
-            )
-            row = col.row()
-            row.template_list(
-                "EL_UL_branches", "", stack, "branches", stack, "active_branch", rows=2
-            )
-            side = row.column(align=True)
-            side.enabled = not stack.is_recording
-            side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
-            side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
-            side.menu(EL_MT_branch_menu.bl_idname, text="", icon="DOWNARROW_HLT")
-            side.separator()
+        col = layout.column()
+        col.label(
+            text=_T("Branches ({count})").format(count=len(stack.branches)),
+            icon="NODETREE",
+        )
+        row = col.row()
+        row.template_list(
+            "EL_UL_branches", "", stack, "branches", stack, "active_branch", rows=2
+        )
+        side = row.column(align=True)
+        side.enabled = not stack.is_recording
+        side.operator(EL_OT_branch_create.bl_idname, text="", icon="ADD")
+        side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
+        side.menu(EL_MT_branch_menu.bl_idname, text="", icon="DOWNARROW_HLT")
+        side.separator()
+        sub = col.row(align=True)
+        branch = stack.branches[stack.active_branch]
+        sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
+        if _active_branch_has_data_obj(obj):
+            sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)
+        sub = col.row(align=True)
+        if not stack.is_recording:
             sub = col.row(align=True)
-            branch = stack.branches[stack.active_branch]
-            sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
-            if _active_branch_has_data_obj(obj):
-                sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)
-            sub = col.row(align=True)
-            if len(stack.branches) > 1 and not stack.is_recording:
+            sub_row = sub.row(align=True)
+            sub_row.ui_units_x = 8
+            sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
+            sub_row.prop(branch, "compare_mode", text="")
+            if branch.compare_mode == "BRANCH":
+                sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
+            if branch.is_comparing:
                 sub = col.row(align=True)
+                sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
+                sub.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
                 sub_row = sub.row(align=True)
-                sub_row.ui_units_x = 8
-                sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
-                sub_row.prop(branch, "compare_mode", text="")
-                if branch.compare_mode == "BRANCH":
-                    sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
-                if branch.is_comparing:
-                    sub = col.row(align=True)
-                    sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
-                    sub.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
-                    sub_row = sub.row(align=True)
-                    sub_row.scale_x = 0.4
-                    sub_row.alignment = "RIGHT"
-                    sub_row.prop(branch, "compare_offset")
+                sub_row.scale_x = 0.4
+                sub_row.alignment = "RIGHT"
+                sub_row.prop(branch, "compare_offset")
 
-                side.separator()
-                side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
+            side.separator()
+            side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
 
         # Layers (path of the active branch)
         col = layout.column()

@@ -820,25 +820,25 @@ class EL_OT_compare(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        if not (_poll_stack_idle(context) and context.mode == "OBJECT"):
-            return False
-        return len(context.object.edit_layers.branches) > 1
+        return _poll_stack_idle(context) and context.mode == "OBJECT"
 
-    def add_comparison(self, branch_index, n):
+    def add_comparison(self, branch_index):
         obj = bpy.context.object
         stack = obj.edit_layers
         branch = stack.branches[branch_index]
-        active_branch = stack.branches[stack.active_branch]
 
-        mesh = obj.data.copy()
-        mesh.name = f"{obj.data.name}_cmp_{branch.name}"
-        path = _branch_path(stack, branch_index)
-        _rebuild_mesh(stack, path, stack.base_mesh, mesh)
         
         dup = obj.copy()
-        dup.data = mesh
         dup.name = f"{obj.name} [{branch.name}]"
-        # Comparison copies must not carry a stack of their own
+
+        # No need to create a unique mesh for the same branch. Tile comparison will update immediate
+        if branch_index != stack.active_branch:
+            mesh = obj.data.copy()
+            mesh.name = f"{obj.data.name}_cmp_{branch.name}"
+            path = _branch_path(stack, branch_index)
+            _rebuild_mesh(stack, path, stack.base_mesh, mesh)
+            dup.data = mesh
+        
         ds = dup.edit_layers
         ds.initialized = False
         ds.is_recording = False
@@ -847,13 +847,11 @@ class EL_OT_compare(bpy.types.Operator):
         ds.branches.clear()
         dup[COMPARE_PROP] = obj.name
         dup.location = obj.location.copy()
-        dup.location.x += active_branch.compare_offset[0] * n
-        dup.location.y += active_branch.compare_offset[1] * n
-        dup.location.z += active_branch.compare_offset[2] * n
         if stack.compare_collection == None:
             stack.compare_collection = bpy.data.collections.new(f"{obj.name}-compares")
             obj.users_collection[0].children.link(stack.compare_collection)
         stack.compare_collection.objects.link(dup)
+        dup.select_set(False)
         return dup
 
     def execute(self, context):
@@ -868,45 +866,51 @@ class EL_OT_compare(bpy.types.Operator):
             n = 1
             for bi, br in enumerate(stack.branches):
                 if bi == stack.active_branch: continue
-                self.add_comparison(bi, n)
+                dup = self.add_comparison(bi)
+                dup.location.x += branch.compare_offset[0] * n
+                dup.location.y += branch.compare_offset[1] * n
+                dup.location.z += branch.compare_offset[2] * n
                 n += 1
         elif branch.compare_mode == "BRANCH":
-            self.add_comparison(branch.compare_branch, 1)
+            dup = self.add_comparison(branch.compare_branch)
+            dup.location.x += branch.compare_offset[0]
+            dup.location.y += branch.compare_offset[1]
+            dup.location.z += branch.compare_offset[2]
         elif branch.compare_mode == "TILE":
             offset = branch.compare_offset
             for i in range(3):
                 if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch, 0)
+                dup = self.add_comparison(stack.active_branch)
                 dup.location[i] += offset[i]
-                dup = self.add_comparison(stack.active_branch, 0)
+                dup = self.add_comparison(stack.active_branch)
                 dup.location[i] -= offset[i]
         elif branch.compare_mode == "TILE_QUAD":
             offset = branch.compare_offset
             for i in range(3):
                 if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch, 0)
+                dup = self.add_comparison(stack.active_branch)
                 dup.location[i] += offset[i]
-                dup = self.add_comparison(stack.active_branch, 0)
+                dup = self.add_comparison(stack.active_branch)
                 dup.location[i] -= offset[i]
                 for i2 in range(3):
                     if i2 <= i or offset[i2] == 0: continue
-                    dup = self.add_comparison(stack.active_branch, 0)
+                    dup = self.add_comparison(stack.active_branch)
                     dup.location[i] += offset[i]
                     dup.location[i2] += offset[i2]
-                    dup = self.add_comparison(stack.active_branch, 0)
+                    dup = self.add_comparison(stack.active_branch)
                     dup.location[i] += offset[i]
                     dup.location[i2] -= offset[i2]
-                    dup = self.add_comparison(stack.active_branch, 0)
+                    dup = self.add_comparison(stack.active_branch)
                     dup.location[i] -= offset[i]
                     dup.location[i2] += offset[i2]
-                    dup = self.add_comparison(stack.active_branch, 0)
+                    dup = self.add_comparison(stack.active_branch)
                     dup.location[i] -= offset[i]
                     dup.location[i2] -= offset[i2]
         elif branch.compare_mode == "TILE_SINGLE":
             offset = branch.compare_offset
             for i in range(3):
                 if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch, 0)
+                dup = self.add_comparison(stack.active_branch)
                 dup.location[i] += offset[i]
         return {"FINISHED"}
 
