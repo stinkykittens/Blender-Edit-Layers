@@ -11,6 +11,8 @@ from .props import EL_Layer
 from .common import (
     COMPARE_PROP,
     ID_ATTR,
+    MOD_TILE_BOOLEAN,
+    MOD_TILE_WELD,
     _assign_branch_color,
     _blocked_notice,
     _last_state,
@@ -820,7 +822,7 @@ class EL_OT_compare(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        return _poll_stack_idle(context) and context.mode == "OBJECT"
+        return _poll_mesh_object(context)
 
     def add_comparison(self, branch_index):
         obj = bpy.context.object
@@ -853,7 +855,7 @@ class EL_OT_compare(bpy.types.Operator):
         stack.compare_collection.objects.link(dup)
         dup.select_set(False)
         return dup
-
+    
     def execute(self, context):
         if _guard_shape_keys(self, context):
             return {"CANCELLED"}
@@ -912,6 +914,24 @@ class EL_OT_compare(bpy.types.Operator):
                 if offset[i] == 0: continue
                 dup = self.add_comparison(stack.active_branch)
                 dup.location[i] += offset[i]
+
+        if not stack.compare_collection:
+            return {"FINISHED"}
+
+        # Add Boolean and wield to clean up tile compares
+        if branch.compare_tile_weld and branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
+            stack.compare_collection.hide_viewport = True
+            for o in stack.compare_collection.objects:
+                boolean = obj.modifiers.new(MOD_TILE_BOOLEAN, 'BOOLEAN')
+                boolean.show_in_editmode = True
+                boolean.operation = "UNION"
+                boolean.object = o
+            boolean.collection = stack.compare_collection
+            weld = obj.modifiers.new(MOD_TILE_WELD, 'WELD')
+            weld.show_in_editmode = True
+        else:
+            stack.compare_collection.hide_viewport = False
+
         return {"FINISHED"}
 
 class EL_OT_compare_clear(bpy.types.Operator):

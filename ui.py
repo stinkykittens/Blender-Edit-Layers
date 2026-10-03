@@ -475,22 +475,22 @@ class EL_PT_panel(bpy.types.Panel):
         if _active_branch_has_data_obj(obj):
             sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)
         sub = col.row(align=True)
-        if not stack.is_recording:
+        sub_row = sub.row(align=True)
+        sub_row.ui_units_x = 8
+        sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
+        sub_row.prop(branch, "compare_mode", text="")
+        if branch.compare_mode == "BRANCH":
+            sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
+        elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
+            sub_row.prop(branch, "compare_tile_weld", icon="AUTOMERGE_OFF", icon_only=True)
+        if branch.is_comparing:
+            sub_row.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
             sub = col.row(align=True)
+            sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
             sub_row = sub.row(align=True)
-            sub_row.ui_units_x = 8
-            sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
-            sub_row.prop(branch, "compare_mode", text="")
-            if branch.compare_mode == "BRANCH":
-                sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
-            if branch.is_comparing:
-                sub_row.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
-                sub = col.row(align=True)
-                sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
-                sub_row = sub.row(align=True)
-                sub_row.scale_x = 0.4
-                sub_row.alignment = "RIGHT"
-                sub_row.prop(branch, "compare_offset")
+            sub_row.scale_x = 0.4
+            sub_row.alignment = "RIGHT"
+            sub_row.prop(branch, "compare_offset")
 
             side.separator()
             side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")

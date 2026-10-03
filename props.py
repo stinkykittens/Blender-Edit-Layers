@@ -166,7 +166,7 @@ class EL_Branch(bpy.types.PropertyGroup):
             items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", ""), ("TILE_QUAD", "Tile Quad", ""), ("TILE_SINGLE", "Tile Single", "")])
     compare_branch: IntProperty(default=0)
     compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0])
-
+    compare_tile_weld: BoolProperty(default=False)
 
 
 class EL_Stack(bpy.types.PropertyGroup):

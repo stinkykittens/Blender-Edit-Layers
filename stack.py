@@ -11,6 +11,8 @@ from bpy import (types)
 from .common import (
     COMPARE_PROP,
     ID_ATTR,
+    MOD_TILE_BOOLEAN,
+    MOD_TILE_WELD,
     _assign_branch_color,
     _influence_cache,
     _last_state,
@@ -388,6 +390,13 @@ def _guard_shape_keys(op, context):
     return False
 def _clear_compares(obj):
     """Delete the comparison duplicates"""
+
+    remove_mods = []
+    for mod in obj.modifiers:
+        if MOD_TILE_BOOLEAN in mod.name or mod.name == MOD_TILE_WELD:
+            remove_mods.append(mod)
+    for mod in remove_mods:
+        obj.modifiers.remove(mod)
 
     removed = 0
     if obj.edit_layers.initialized and obj.edit_layers.compare_collection != None:

@@ -9,6 +9,9 @@ COMPARE_PROP = "el_compare_of"
 # Minimum distance considered a move
 EPS = 1e-6
 
+MOD_TILE_BOOLEAN = "COMPARE-Boolean"
+MOD_TILE_WELD = "COMPARE-Weld"
+
 # Pre-edit snapshot while recording (object name -> {"pre": snapshot, "uid": int})
 _recording = {}
 # Warnings from the last rebuild (object name -> list[str])
