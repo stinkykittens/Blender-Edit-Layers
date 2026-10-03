@@ -175,7 +175,7 @@ class EL_UL_layers(bpy.types.UIList):
         # elif item.disable_with_parent:
         #     left.separator(factor=4)
         
-        left.prop(item, "name", text=" | " + item.name if item.disable_with_parent else item.name, emboss=False)
+        left.prop(item, "name", text=" | " if item.disable_with_parent else "", emboss=False)
 
         right = row.row(align=True)
         right.alignment = "RIGHT"
@@ -484,9 +484,9 @@ class EL_PT_panel(bpy.types.Panel):
             if branch.compare_mode == "BRANCH":
                 sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
             if branch.is_comparing:
+                sub_row.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
                 sub = col.row(align=True)
                 sub.operator(EL_OT_compare.bl_idname, text="Refresh", icon="FILE_REFRESH")
-                sub.operator(EL_OT_reset_compare_offset.bl_idname, icon="PRESET")
                 sub_row = sub.row(align=True)
                 sub_row.scale_x = 0.4
                 sub_row.alignment = "RIGHT"
