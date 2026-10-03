@@ -239,23 +239,22 @@ def _is_overriden(stack, branch_index, uid, tmp):
     return False
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
-    #TODO: Use bpy.ops.object.data_transfer instead of the modifier
-    br = obj.edit_layers.branches[obj.edit_layers.active_branch]
-    modifier: types.DataTransferModifier = obj.modifiers.new('_DATA_TRANSFER', 'DATA_TRANSFER')
-    modifier.object = source_obj
-    modifier.use_vert_data = True
-    modifier.use_loop_data = True
-    modifier.data_types_verts = { 'VGROUP_WEIGHTS', "COLOR_VERTEX" }
-    modifier.data_types_loops = { 'COLOR_CORNER', 'UV' } # 'CUSTOM_NORMAL' might be desired to include
     if _active_branch_has_data_obj(obj) and br.data_transfer_mode == "TOPOLOGY":
-        modifier.vert_mapping = "TOPOLOGY"
-        modifier.loop_mapping = "TOPOLOGY"
-    # Apply the modifier
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.datalayout_transfer(modifier = modifier.name)
-    bpy.ops.object.modifier_apply(modifier = modifier.name)
-    obj.data.update()
+        vert_mapping = "TOPOLOGY"
+        loop_mapping = "TOPOLOGY"
+    else:
+        vert_mapping = "NEAREST"
+        loop_mapping = "NEAREST_POLYNOR"
 
+    bpy.ops.object.select_all(action='DESELECT')
+    source_obj.select_set(True)
+    obj.select_set(True)
+    bpy.ops.object.data_transfer(data_type='VGROUP_WEIGHTS', vert_mapping=vert_mapping, use_create=True, use_freeze=False)
+    bpy.ops.object.data_transfer(data_type='COLOR_VERTEX', vert_mapping=vert_mapping, use_create=True, use_freeze=True)
+    bpy.ops.object.data_transfer(data_type='COLOR_CORNER', loop_mapping=loop_mapping, use_create=True, use_freeze=False)
+    bpy.ops.object.data_transfer(data_type='UV', loop_mapping=loop_mapping, use_create=True, use_freeze=True)
+    obj.data.update()
+    bpy.context.view_layer.objects.active = obj
 
 def _safe_rebuild(obj):
     """Skip the rebuild when shape keys exist; only reset state tracking
