@@ -1120,7 +1120,7 @@ class EL_OT_set_branch_data(bpy.types.Operator):
         
         data_obj = context.object.copy()
         data_obj.data = context.object.data.copy()
-        data_obj.name = br.name + "_Data"
+        data_obj.rename(br.name + "_Data", mode="ALWAYS")
         bpy.context.collection.objects.link(data_obj)
         data_obj.parent = context.object
         data_obj.location = (0, 0, 0)

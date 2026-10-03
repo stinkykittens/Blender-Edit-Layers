@@ -241,7 +241,7 @@ def _is_overriden(stack, branch_index, uid, tmp):
     return False
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
-    if _active_branch_has_data_obj(obj) and br.data_transfer_mode == "TOPOLOGY":
+    if _active_branch_has_data_obj(obj) and obj.edit_layers.branches[obj.edit_layers.active_branch].data_transfer_mode == "TOPOLOGY":
         vert_mapping = "TOPOLOGY"
         loop_mapping = "TOPOLOGY"
     else:
@@ -249,12 +249,15 @@ def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
         loop_mapping = "NEAREST_POLYNOR"
 
     bpy.ops.object.select_all(action='DESELECT')
-    source_obj.select_set(True)
+    source_obj.hide_viewport = False
+    bpy.context.view_layer.objects.active = source_obj
     obj.select_set(True)
-    bpy.ops.object.data_transfer(data_type='VGROUP_WEIGHTS', vert_mapping=vert_mapping, use_create=True, use_freeze=False)
-    bpy.ops.object.data_transfer(data_type='COLOR_VERTEX', vert_mapping=vert_mapping, use_create=True, use_freeze=True)
-    bpy.ops.object.data_transfer(data_type='COLOR_CORNER', loop_mapping=loop_mapping, use_create=True, use_freeze=False)
-    bpy.ops.object.data_transfer(data_type='UV', loop_mapping=loop_mapping, use_create=True, use_freeze=True)
+    source_obj.select_set(True)
+    bpy.ops.object.data_transfer(data_type='VGROUP_WEIGHTS', vert_mapping=vert_mapping,use_create=True, use_freeze=False, layers_select_src="ALL", layers_select_dst="NAME")
+    bpy.ops.object.data_transfer(data_type='COLOR_VERTEX', vert_mapping=vert_mapping, use_create=True, use_freeze=False, layers_select_src="ALL", layers_select_dst="NAME") # use_freeze should be True. And it should just be a optimization but it breaks 
+    bpy.ops.object.data_transfer(data_type='COLOR_CORNER', loop_mapping=loop_mapping, use_create=True, use_freeze=False, layers_select_src="ALL", layers_select_dst="NAME")
+    bpy.ops.object.data_transfer(data_type='UV', loop_mapping=loop_mapping, use_create=True, use_freeze=False, layers_select_src="ALL", layers_select_dst="NAME") # use_freeze=True
+    source_obj.hide_viewport = True
     obj.data.update()
     bpy.context.view_layer.objects.active = obj
 

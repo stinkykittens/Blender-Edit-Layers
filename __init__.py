@@ -38,7 +38,6 @@ classes = (
     operators.EL_OT_bake_upto,
     ui.EL_MT_layer_menu,
     ui.EL_MT_branch_menu,
-    ui.EL_PT_remesh_branch,
     operators.EL_OT_branch_create,
     operators.EL_OT_branch_remove,
     operators.EL_OT_compare,
@@ -59,6 +58,7 @@ classes = (
     ui.EL_UL_layers,
     ui.EL_UL_branches,
     ui.EL_PT_panel,
+    ui.EL_PT_remesh_branch,
 )
 
 
