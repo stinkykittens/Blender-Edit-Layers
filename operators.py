@@ -1289,6 +1289,7 @@ class EL_OT_add_layer_mask(bpy.types.Operator):
         
         mask = layer.masks.add()
         mask.owner = self.uid
+        mask.name = "Mask " + str(len(layer.masks))
 
         return {"FINISHED"}
 

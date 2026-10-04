@@ -147,15 +147,17 @@ class EL_UL_layer_masks(bpy.types.UIList):
     ):
         col = layout.column(align=True)
         row = col.row(align=True)
-        op = row.operator(EL_OT_edit_mask.bl_idname, icon="MOD_MASK", text="", emboss=True)
-        op.uid = item.owner
-        op.idx = index
-        sub = row.row(align=True)
-        sub.ui_units_x = 1
-        # sub.scale_x = 0.5
-        sub.label(text=str(index + 1))
+        use = item.share_mode == "USE"
+        if not use:
+            op = row.operator(EL_OT_edit_mask.bl_idname, icon="MOD_MASK", text="", emboss=True)
+            op.uid = item.owner
+            op.idx = index
+        if use: row.prop(item, "use_enabled", icon="CHECKBOX_DEHLT" if item.use_enabled else "CHECKBOX_HLT", icon_only=True, emboss=False)
         row.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
+        row.label(text=item.name)
+        if use: row.prop(item, "use_mix", icon="CHECKBOX_DEHLT" if item.use_mix else "CHECKBOX_HLT", icon_only=True, emboss=False)
         row.prop(item, "mix", text="", slider=True)
+        if use: row.prop(item, "use_mix_mode", icon="CHECKBOX_DEHLT" if item.use_mix_mode else "CHECKBOX_HLT", icon_only=True, emboss=False)
         row.prop(item, "mix_mode", text="")
         row.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
         if not item.is_collapsed:
@@ -163,7 +165,9 @@ class EL_UL_layer_masks(bpy.types.UIList):
             row.prop(item, "name", text="", emboss=True)
             row.prop(item, "share_mode", text="") 
             row.separator()
+            if use: row.prop(item, "use_bg", icon="CHECKBOX_DEHLT" if item.use_bg else "CHECKBOX_HLT", icon_only=True, emboss=False)
             row.prop(item, "bg_color", text="")
+            if use: row.prop(item, "use_value", icon="CHECKBOX_DEHLT" if item.use_value else "CHECKBOX_HLT", icon_only=True, emboss=False)
             row.prop(item, "value")
 
 class EL_UL_layers(bpy.types.UIList):

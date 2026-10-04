@@ -129,7 +129,12 @@ class EL_LayerMask(bpy.types.PropertyGroup):
             default=(0.0, 0.0, 0.0),
         )
     data: StringProperty(default="")
-    is_collapsed: BoolProperty(default=True)
+    is_collapsed: BoolProperty(default=False)
+    use_enabled: BoolProperty(default=True)
+    use_mix: BoolProperty(default=True)
+    use_mix_mode: BoolProperty(default=True)
+    use_bg: BoolProperty(default=True)
+    use_value: BoolProperty(default=True)
 
 #TODO: a way to delete vertexes from the data or edit its anchors; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
