@@ -111,11 +111,18 @@ def _update_compare(self, context):
         bpy.ops.edit_layers.compare_clear()
 
 class EL_LayerMask(bpy.types.PropertyGroup):
+    # Owner -1 means it's shared throughout the stack using a unique name. -2: unique for branch
+    owner: IntProperty()
+    name: StringProperty(default="Mask")
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
+    share_mode: EnumProperty(items=[("UNIQUE", "Unique", ""), ("SHARE", "Share", ""), ("USE", "Use", "")], default="UNIQUE",
+                             description="Set to 'Branch' or 'Stack' to make the mask share its data with other masks having the same name")
     mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
-    max_value: FloatProperty(name="Max", min=0, default=1, update=_on_enabled_update)
-    mix_mode: EnumProperty(name="Mix Mode", items=[("ADD", "Add", ""), ("SUBTRACT", "Sub", ""), ("MULTIPLY", "Mul", "")], default="MULTIPLY")
+    mix_mode: EnumProperty(name="Mix Mode", items=[("MIX", "Mix", ""),("ADD", "Add", ""), ("SUBTRACT", "Subtract", ""), ("MULTIPLY", "Multiply", "")], default="MIX")
+    value: FloatProperty(name="Value", default=1, update=_on_enabled_update)
+    background: FloatProperty(name="BG", default=0, update=_on_enabled_update)
     data: StringProperty(default="")
+    is_collapsed: BoolProperty(default=True)
 
 #TODO: a way to delete vertexes from the data or edit its anchors; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
@@ -129,7 +136,7 @@ class EL_Layer(bpy.types.PropertyGroup):
     has_foldable_children: BoolProperty(get=_get_has_foldable_children)
     # Refers to preventing child layers from being visable
     is_folded: BoolProperty(default=False)
-    is_collapsed: BoolProperty(default=False)
+    is_collapsed: BoolProperty(default=True)
     # Persistent layer UID (separate from vertex IDs; 0 = unassigned)
     uid: IntProperty(default=0)
     # UID of the parent layer (0 = directly on the base mesh)
@@ -141,6 +148,8 @@ class EL_Layer(bpy.types.PropertyGroup):
 
     masks: CollectionProperty(type=EL_LayerMask)
     selected_mask: IntProperty(default=0)
+    disable_masks: BoolProperty(default=False)
+    preview_masks: BoolProperty(default=False)
 
     internal_enabled: BoolProperty(default=True)
     override_base_mesh: BoolProperty(name="Override Base Mesh", get=_get_override_base_mesh, set=_set_override_base_mesh)

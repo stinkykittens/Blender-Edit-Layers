@@ -34,6 +34,7 @@ from .operators import (
     EL_OT_add_layer_mask,
     EL_OT_remove_layer_mask,
     EL_OT_move_layer_mask,
+    EL_OT_edit_mask,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -143,14 +144,27 @@ class EL_UL_layer_masks(bpy.types.UIList):
         self, context, layout: bpy.types.UILayout, data, item: EL_LayerMask, icon,
         active_data, active_propname, index=0, flt_flag=0,
     ):
-        row = layout.row(align=True)
-        row.prop(item,"enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
-        row.separator(factor=3)
+        col = layout.column(align=True)
+        row = col.row(align=True)
+        op = row.operator(EL_OT_edit_mask.bl_idname, icon="MOD_MASK", text="", emboss=True)
+        op.uid = item.owner
+        op.idx = index
+        sub = row.row(align=True)
+        sub.ui_units_x = 1
+        # sub.scale_x = 0.5
+        sub.label(text=str(index + 1))
+        row.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
         row.prop(item, "mix", text="", slider=True)
         row.prop(item, "mix_mode", text="")
-        row.prop(item, "max_value")
+        row.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
+        if not item.is_collapsed:
+            row = col.row(align=True)
+            row.prop(item, "name", text="", emboss=True)
+            row.prop(item, "share_mode", text="") 
+            row.separator()
+            row.prop(item, "background")
+            row.prop(item, "value")
 
-    
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
 
@@ -216,13 +230,9 @@ class EL_UL_layers(bpy.types.UIList):
             ind = right.row(align=True)
             ind.ui_units_x = 0.5
             ind.template_node_socket(color=(*branch.color, 1.0))
-        right.prop(
-            item,
-            "enabled",
-            text="",
-            icon="HIDE_OFF" if item.enabled else "HIDE_ON",
-            emboss=False,
-        )
+        if len(item.masks) > 0:
+            right.prop(item, "disable_masks", icon="MOD_MASK" if not item.disable_masks else "HIDE_ON", icon_only=True, emboss=False)
+        right.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
         right.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
         
         if not item.is_collapsed:
@@ -250,14 +260,24 @@ class EL_UL_layers(bpy.types.UIList):
                 sub_row.prop(item, "has_mix_slider", icon="CENTER_ONLY")
 
             if _layer_branches(context.object.edit_layers, item.uid)[0] == context.object.edit_layers.active_branch:
-                sub_row.separator(factor=2)
+                sub_row.separator(factor=3)
                 sub_row.prop(item, "override_base_mesh", icon="MESH_DATA", icon_only=True)
+            
             # Masking
+            has_masks = len(item.masks) > 0
+            sub_colum.separator()
             sub_row = sub_colum.row(align=True)
-            sub_row.operator(EL_OT_add_layer_mask.bl_idname, icon="ADD").uid = item.uid
+            sub_row.scale_x = 2
+            sub_row.operator(EL_OT_add_layer_mask.bl_idname, icon="ADD", text="" if has_masks else "Add Mask").uid = item.uid
 
-            if len(item.masks) > 0:
-                sub_row.operator(EL_OT_remove_layer_mask.bl_idname, icon="REMOVE").uid = item.uid
+            if has_masks:
+                sub_row.operator(EL_OT_remove_layer_mask.bl_idname, icon="REMOVE", text="").uid = item.uid
+                sub_row.operator(EL_OT_remove_layer_mask.bl_idname, icon="COPYDOWN", text="").uid = item.uid
+            sub_row.operator(EL_OT_add_layer_mask.bl_idname, icon="PASTEDOWN", text="" if has_masks else "Paste Mask").uid = item.uid
+            if has_masks:
+                sub_row = sub_row.row(align=True)
+                sub_row.alignment = "RIGHT"
+                sub_row.prop(item, "preview_masks", text="", icon="SEQ_PREVIEW")
                 op = sub_row.operator(EL_OT_move_layer_mask.bl_idname, icon="TRIA_UP", text="")
                 op.uid = item.uid
                 op.direction = "UP"

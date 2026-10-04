@@ -54,6 +54,7 @@ classes = (
     operators.EL_OT_add_layer_mask,
     operators.EL_OT_remove_layer_mask,
     operators.EL_OT_move_layer_mask,
+    operators.EL_OT_edit_mask,
     ui.EL_UL_layer_masks,
     ui.EL_UL_layers,
     ui.EL_UL_branches,

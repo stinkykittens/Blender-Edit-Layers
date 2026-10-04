@@ -6,7 +6,7 @@ import bpy
 import bmesh
 from bpy.props import EnumProperty
 
-from .props import EL_Layer
+from .props import EL_Layer, EL_LayerMask
 
 from .common import (
     COMPARE_PROP,
@@ -1277,6 +1277,7 @@ class EL_OT_add_layer_mask(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         stack = context.object.edit_layers
+        layer: EL_Layer
         if self.uid == -1:
             layer = stack.layers[stack.active_index]
         else:
@@ -1285,6 +1286,7 @@ class EL_OT_add_layer_mask(bpy.types.Operator):
                     layer = l
         
         mask = layer.masks.add()
+        mask.owner = self.uid
 
         return {"FINISHED"}
 
@@ -1302,6 +1304,7 @@ class EL_OT_remove_layer_mask(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         stack = context.object.edit_layers
+        layer: EL_Layer
         if self.uid == -1:
             layer = stack.layers[stack.active_index]
         else:
@@ -1331,26 +1334,13 @@ class EL_OT_move_layer_mask(bpy.types.Operator):
     def execute(self, context):
         obj = context.object
         stack = context.object.edit_layers
+        layer: EL_Layer
         if self.uid == -1:
             layer = stack.layers[stack.active_index]
         else:
             for l in stack.layers:
                 if l.uid == self.uid:
                     layer = l
-
-        # masks = []
-        # for m in layer.masks:
-        #     masks.append(m)
-        # mask = masks.pop(layer.selected_mask)
-        # if self.direction == "UP":
-        #     layer.selected_mask += 1
-        # else:
-        #     layer.selected_mask -= 1
-        # layer.selected_mask = min(0, layer.selected_mask)
-        # masks.insert(layer.selected_mask, mask)
-        # layer.masks.clear()
-        # for m in masks:
-        #     layer.masks.append(m)
 
         to_index = layer.selected_mask
         if self.direction == "DOWN":
@@ -1360,5 +1350,33 @@ class EL_OT_move_layer_mask(bpy.types.Operator):
         to_index = max(0, min(len(layer.masks) - 1, to_index))
         layer.masks.move(layer.selected_mask, to_index)
         layer.selected_mask = to_index
+
+        return {"FINISHED"}
+
+class EL_OT_edit_mask(bpy.types.Operator):
+    bl_idname = "edit_layers.edit_mask"
+    bl_label = "Edit Mask"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+    idx: bpy.props.IntProperty(default=0)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context)
+    
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        layer: EL_Layer
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+        
+        mask: EL_LayerMask = layer.masks[self.idx]
+        print(mask)
 
         return {"FINISHED"}
