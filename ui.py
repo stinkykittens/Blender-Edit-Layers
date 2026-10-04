@@ -35,6 +35,7 @@ from .operators import (
     EL_OT_remove_layer_mask,
     EL_OT_move_layer_mask,
     EL_OT_edit_mask,
+    EL_OT_commit_mask,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -162,7 +163,7 @@ class EL_UL_layer_masks(bpy.types.UIList):
             row.prop(item, "name", text="", emboss=True)
             row.prop(item, "share_mode", text="") 
             row.separator()
-            row.prop(item, "background")
+            row.prop(item, "bg_color", text="")
             row.prop(item, "value")
 
 class EL_UL_layers(bpy.types.UIList):
@@ -429,13 +430,19 @@ class EL_PT_panel(bpy.types.Panel):
             rec_layer = next(
                 (l for l in stack.layers if l.uid == stack.recording_uid), None
             )
-            if rec_layer is not None:
-                box.label(text=_T("Re-editing: {name}").format(name=rec_layer.name), icon="REC")
+            if stack.recording_mask_attr != "":
+                box.label(text=_T("Editing Mask: {l}: {m}").format(l=rec_layer.name, m=rec_layer.masks[stack.recording_mask].name), icon="REC")
+                row = box.row(align=True)
+                row.operator(EL_OT_commit_mask.bl_idname, icon="CHECKMARK")
+                row.operator(EL_OT_cancel.bl_idname, text="Discard", icon="X")
             else:
-                box.label(text="Recording a new layer", icon="REC")
-            row = box.row(align=True)
-            row.operator(EL_OT_commit.bl_idname, icon="CHECKMARK")
-            row.operator(EL_OT_cancel.bl_idname, text="Discard", icon="X")
+                if rec_layer is not None:
+                    box.label(text=_T("Re-editing: {name}").format(name=rec_layer.name), icon="REC")
+                else:
+                    box.label(text="Recording a new layer", icon="REC")
+                row = box.row(align=True)
+                row.operator(EL_OT_commit.bl_idname, icon="CHECKMARK")
+                row.operator(EL_OT_cancel.bl_idname, text="Discard", icon="X")
         elif obj.mode in {"EDIT", "SCULPT"}:
             # The user entered Edit/Sculpt mode without recording
             box = layout.box()

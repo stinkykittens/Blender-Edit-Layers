@@ -1,12 +1,13 @@
 """Operator definitions"""
 
 import json
+import math
 
 import bpy
 import bmesh
 from bpy.props import EnumProperty
 
-from .props import EL_Layer, EL_LayerMask
+from .props import EL_Layer, EL_LayerMask, EL_Stack
 
 from .common import (
     COMPARE_PROP,
@@ -333,6 +334,7 @@ class EL_OT_cancel(bpy.types.Operator):
         _recording.pop(obj.name, None)
         stack.is_recording = False
         stack.recording_uid = 0
+        stack.recording_mask_attr = ""
         if _safe_rebuild(obj) is None:
             self.report(
                 {"WARNING"},
@@ -1367,8 +1369,9 @@ class EL_OT_edit_mask(bpy.types.Operator):
     
     def execute(self, context):
         obj = context.object
-        stack = context.object.edit_layers
+        stack: EL_Stack = context.object.edit_layers
         layer: EL_Layer
+        print(self.uid)
         if self.uid == -1:
             layer = stack.layers[stack.active_index]
         else:
@@ -1377,6 +1380,79 @@ class EL_OT_edit_mask(bpy.types.Operator):
                     layer = l
         
         mask: EL_LayerMask = layer.masks[self.idx]
-        print(mask)
+
+        stack.recording_uid = self.uid
+        stack.recording_mask = self.idx
+        stack.recording_mask_attr = "__" + mask.name
+        stack.is_recording = True
+
+        path = _branch_path(stack)
+        pos = next((i for i, l in enumerate(path) if l.uid == layer.uid), None) + 1
+        _rebuild(obj, pos)
+
+        bpy.ops.object.mode_set(mode='VERTEX_PAINT')
+        bpy.ops.geometry.color_attribute_add(name=stack.recording_mask_attr, color=[mask.bg_color[0], mask.bg_color[1], mask.bg_color[2], 1])
+        obj.data.color_attributes.active_color_name = stack.recording_mask_attr
+        attribute: bpy.types.FloatColorAttribute = obj.data.color_attributes[stack.recording_mask_attr]
+        vert_count = len(obj.data.vertices)
+        if mask.data:
+            data = json.loads(mask.data)
+            for i, c in data.items():
+                i = int(i)
+                if i + 1 > vert_count:
+                    continue
+                if type(c) is float:
+                    print(c)
+                    attribute.data[i].color = [c, c, c, 1]
+                else:
+                    attribute.data[i].color = [c[0], c[1], c[2], 1]
+        return {"FINISHED"}
+
+class EL_OT_commit_mask(bpy.types.Operator):
+    """Save the edits into the layer as a diff"""
+
+    bl_idname = "edit_layers.commit_mask"
+    bl_label = "Commit Mask"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return (
+            _poll_mesh_object(context)
+            and context.object.edit_layers.is_recording
+        )
+
+    def execute(self, context):
+        obj = context.object
+        stack: EL_Stack = obj.edit_layers
+        layer: EL_Layer
+        if stack.recording_uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == stack.recording_uid:
+                    layer = l
+        mask: EL_LayerMask = layer.masks[stack.recording_mask]
+        attribute: bpy.types.FloatColorAttribute = obj.data.color_attributes[stack.recording_mask_attr]
+        data = {}
+        
+        for i, c in enumerate(attribute.data):
+            if math.isclose(c.color[0], mask.bg_color[0]) and math.isclose(c.color[1], mask.bg_color[1]) and math.isclose(c.color[2], mask.bg_color[2]):
+                continue
+            if math.isclose(c.color[0], c.color[1]) and math.isclose(c.color[0], c.color[2]):
+                data[i] = c.color[0]
+            else:
+                data[i] = [c.color[0], c.color[1], c.color[2]]
+
+        mask.data = json.dumps(data)
+
+        stack.is_recording = False
+        stack.recording_uid = 0
+        # if stack.recording_mask_attr in obj.data.color_attributes:
+        #     obj.data.color_attributes.remove(obj.data.color_attributes[stack.recording_mask_attr])
+        stack.recording_mask_attr = ""
+        bpy.ops.object.mode_set(mode='OBJECT')
+        _safe_rebuild(obj)
 
         return {"FINISHED"}
+

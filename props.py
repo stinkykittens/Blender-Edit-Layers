@@ -120,7 +120,14 @@ class EL_LayerMask(bpy.types.PropertyGroup):
     mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
     mix_mode: EnumProperty(name="Mix Mode", items=[("MIX", "Mix", ""),("ADD", "Add", ""), ("SUBTRACT", "Subtract", ""), ("MULTIPLY", "Multiply", "")], default="MIX")
     value: FloatProperty(name="Value", default=1, update=_on_enabled_update)
-    background: FloatProperty(name="BG", default=0, update=_on_enabled_update)
+    bg_color: FloatVectorProperty(
+            name="BG",
+            subtype="COLOR",
+            size=3,
+            min=0.0,
+            max=1.0,
+            default=(0.0, 0.0, 0.0),
+        )
     data: StringProperty(default="")
     is_collapsed: BoolProperty(default=True)
 
@@ -200,6 +207,8 @@ class EL_Stack(bpy.types.PropertyGroup):
     is_dirty: BoolProperty(default=False, get=lambda self: _is_dirty(bpy.context.object))
     # UID of the layer being recorded (0 = new layer)
     recording_uid: IntProperty(default=0)
+    recording_mask: IntProperty(default=0)
+    recording_mask_attr: StringProperty()
     base_mesh: PointerProperty(type=bpy.types.Mesh)
     show_influence: BoolProperty(
         name="Show Influence",
