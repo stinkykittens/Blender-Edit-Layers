@@ -125,9 +125,21 @@ def _update_compare(self, context):
     else:
         bpy.ops.edit_layers.compare_clear()
 
+def _get_shared_mask_names(self, context):
+    shared = []
+    for l in context.object.edit_layers.layers:
+        for m in l.masks:
+            if m.share_mode == "SHARE":
+                shared.append((m.name, m.name, ""))
+    return shared
+
+def _update_shared_mask_name(self, context):
+    self.name = self.shared_name
+
 class EL_LayerMask(bpy.types.PropertyGroup):
     owner: IntProperty()
     name: StringProperty(default="Mask", update=_mask_update)
+    shared_name: EnumProperty(items=_get_shared_mask_names, update=_update_shared_mask_name)
     mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_mask_update)
     enabled: BoolProperty(name="Enabled", default=True, update=_mask_update)
     mix_mode: EnumProperty(name="Mix Mode",

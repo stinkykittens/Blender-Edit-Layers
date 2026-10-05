@@ -162,13 +162,20 @@ class EL_UL_layer_masks(bpy.types.UIList):
         row.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
         if not item.is_collapsed:
             row = col.row(align=True)
-            if use: row.prop(item, "override_data", icon="CHECKBOX_HLT" if item.override_data else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
-            if use and item.shared_mask_not_found:
-                    row.prop(item, "name", text="", emboss=True, icon="NOT_FOUND")
-            else:
+            if not use:
                 row.prop(item, "name", text="", emboss=True)
+            elif item.shared_mask_not_found:
+                row.prop(item, "shared_name", text="", emboss=True, icon="NOT_FOUND")
+            else:
+                row.prop(item, "shared_name", text="", emboss=True)
             row.prop(item, "share_mode", text="") 
-            row.separator()
+            if use:
+                sub_row = row.row(align=True)
+                sub_row.ui_units_x = 4
+                sub_row.alignment = "LEFT"
+                sub_row.prop(item, "override_data", icon="CHECKBOX_HLT" if item.override_data else "CHECKBOX_DEHLT", text="Own Data", emboss=False)
+            else:
+                row.separator()
             if use: row.prop(item, "override_bg", icon="CHECKBOX_HLT" if item.override_bg else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
             row.prop(item, "bg_color", text="")
             if use: row.prop(item, "override_value", icon="CHECKBOX_HLT" if item.override_value else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
