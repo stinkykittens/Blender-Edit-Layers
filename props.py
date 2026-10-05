@@ -15,7 +15,6 @@ from bpy.props import (
 
 from .stack import _has_shape_keys, _is_dirty, _layer_branches, _rebuild
 
-
 def _tag_redraw_view3d(context):
     for win in context.window_manager.windows:
         for area in win.screen.areas:
@@ -31,12 +30,12 @@ def _on_enabled_update(self, context):
         # Also defer while shape keys exist (a rebuild would destroy them).
         if (
             stack.initialized
+            and not stack.is_rebuilding
             and not stack.is_recording
             and not _is_dirty(obj)
             and not _has_shape_keys(obj)
         ):
             _rebuild(obj)
-
 
 def _branch_update(self, context):
     obj = context.object
@@ -44,6 +43,7 @@ def _branch_update(self, context):
         stack = obj.edit_layers
         if (
             stack.initialized
+            and not stack.is_rebuilding
             and not stack.is_recording
             and stack.branches
             and not _is_dirty(obj)
@@ -51,6 +51,21 @@ def _branch_update(self, context):
         ):
             _rebuild(obj, rebuild_br_base_meshes=True)
 
+def _mask_update(self, context):
+    if self.share_mode == "UNIQUE":
+        _on_enabled_update(self, context)
+    obj = context.object
+    if obj and obj.type == "MESH":
+        stack = obj.edit_layers
+        if (
+            stack.initialized
+            and not stack.is_rebuilding
+            and not stack.is_recording
+            and stack.branches
+            and not _is_dirty(obj)
+            and not _has_shape_keys(obj)
+        ):
+            _rebuild(obj, rebuild_br_base_meshes=True, shared_mask_update=True)
 
 def _set_enabled(self, v):
     self.internal_enabled = v
@@ -111,15 +126,14 @@ def _update_compare(self, context):
         bpy.ops.edit_layers.compare_clear()
 
 class EL_LayerMask(bpy.types.PropertyGroup):
-    # Owner -1 means it's shared throughout the stack using a unique name. -2: unique for branch
     owner: IntProperty()
-    name: StringProperty(default="Mask")
-    enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update)
-    share_mode: EnumProperty(items=[("UNIQUE", "Unique", ""), ("SHARE", "Share", ""), ("USE", "Use", "")], default="UNIQUE",
-                             description="Set to 'Branch' or 'Stack' to make the mask share its data with other masks having the same name")
-    mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
-    mix_mode: EnumProperty(name="Mix Mode", items=[("MIX", "Mix", ""),("ADD", "Add", ""), ("SUBTRACT", "Subtract", ""), ("MULTIPLY", "Multiply", "")], default="MIX")
-    value: FloatProperty(name="Value", default=1, update=_on_enabled_update)
+    name: StringProperty(default="Mask", update=_mask_update)
+    mix: FloatProperty(name="Mix", min=0, max=1, default=1, update=_mask_update)
+    enabled: BoolProperty(name="Enabled", default=True, update=_mask_update)
+    mix_mode: EnumProperty(name="Mix Mode",
+                           items=[("MIX", "Mix", ""),("ADD", "Add", ""), ("SUBTRACT", "Subtract", ""), ("MULTIPLY", "Multiply", "")],
+                           default="MIX", update=_mask_update)
+    value: FloatProperty(name="Value", default=1, update=_mask_update)
     bg_color: FloatVectorProperty(
             name="BG",
             subtype="COLOR",
@@ -127,14 +141,34 @@ class EL_LayerMask(bpy.types.PropertyGroup):
             min=0.0,
             max=1.0,
             default=(0.0, 0.0, 0.0),
-        )
+            update=_mask_update)
     data: StringProperty(default="")
     is_collapsed: BoolProperty(default=False)
-    use_enabled: BoolProperty(default=True)
-    use_mix: BoolProperty(default=True)
-    use_mix_mode: BoolProperty(default=True)
-    use_bg: BoolProperty(default=True)
-    use_value: BoolProperty(default=True)
+    share_mode: EnumProperty(items=[("UNIQUE", "Unique", ""), ("SHARE", "Share", ""), ("COPY", "Copy", ""), ("OVERRIDE", "Override", "")], default="UNIQUE",
+                             description="Set to 'Branch' or 'Stack' to make the mask share its data with other masks having the same name",
+                             update=_mask_update)
+    override_data: BoolProperty(default=False, update=_mask_update)
+    override_enabled: BoolProperty(default=False, update=_mask_update)
+    override_mix: BoolProperty(default=False, update=_mask_update)
+    override_mix_mode: BoolProperty(default=False, update=_mask_update)
+    override_bg: BoolProperty(default=False, update=_mask_update)
+    override_value: BoolProperty(default=False, update=_mask_update)
+    shared_mask_not_found: BoolProperty(default=False)
+
+    def copy_data(self, mask):
+        if not self.override_data:
+            self.data = mask.data
+        if not self.override_enabled:
+            self.enabled = mask.enabled
+        if not self.override_mix:
+            self.mix = mask.mix
+        if not self.override_mix_mode:
+            self.mix_mode = mask.mix_mode
+        if not self.override_bg:
+            self.bg_color = mask.bg_color
+        if not self.override_value:
+            self.value = mask.value
+
 
 #TODO: a way to delete vertexes from the data or edit its anchors; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
@@ -210,6 +244,7 @@ class EL_Stack(bpy.types.PropertyGroup):
     next_uid: IntProperty(default=1)
     is_recording: BoolProperty(default=False)
     is_dirty: BoolProperty(default=False, get=lambda self: _is_dirty(bpy.context.object))
+    is_rebuilding: BoolProperty(default=False)
     # UID of the layer being recorded (0 = new layer)
     recording_uid: IntProperty(default=0)
     recording_mask: IntProperty(default=0)

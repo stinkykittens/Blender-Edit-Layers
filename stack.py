@@ -167,13 +167,16 @@ def _fingerprint(mesh):
     )
 
 
-def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False, rebuild_br_base_meshes=False):
+def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=None, transfer_data=True, ignore_mix_factor=False, rebuild_br_base_meshes=False, shared_mask_update=False):
     """Rebuild the object from the active (or given) branch"""
 
-    if bpy.context.object.mode == "EDIT":
+    stack = obj.edit_layers
+
+    if stack.is_rebuilding or bpy.context.object.mode == "EDIT":
         return []
 
-    stack = obj.edit_layers
+    stack.is_rebuilding = True
+
     if branch_index is None:
         branch_index = stack.active_branch
     branch = stack.branches[branch_index]
@@ -210,6 +213,8 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
         path = branch_path
         base_mesh = stack.tmp_base_mesh
 
+    if shared_mask_update:
+        update_shared_masks(path)
     
     warnings, applied = _rebuild_mesh(stack, path, base_mesh, obj.data, respect_enabled, upto, ignore_mix_factor=ignore_mix_factor)
     _rebuild_serial[0] += 1  # invalidate the influence highlight cache
@@ -225,6 +230,7 @@ def _rebuild(obj: types.Object, upto=None, respect_enabled=True, branch_index=No
             mesh = source_obj.data
             bpy.data.objects.remove(source_obj, do_unlink=True)
             bpy.data.meshes.remove(mesh)
+    stack.is_rebuilding = False
     return warnings
 
 def _is_overriden(stack, branch_index, uid, tmp):
@@ -271,6 +277,22 @@ def _safe_rebuild(obj):
         _last_state.pop(obj.name, None)
         return None
     return _rebuild(obj)
+
+
+def update_shared_masks(path):
+    shared = {}
+    for l in path:
+        for mask in l.masks:
+            if mask.share_mode == "SHARE":
+                shared[mask.name] = mask
+            elif mask.share_mode in ["COPY", "OVERRIDE"]:
+                if mask.name in shared.keys():
+                    mask.shared_mask_not_found = False
+                    mask.copy_data(shared[mask.name])
+                    if mask.share_mode == "OVERRIDE":
+                        shared[mask.name] = mask
+                else:
+                    mask.shared_mask_not_found = True
 
 
 def _is_dirty(obj):

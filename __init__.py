@@ -89,6 +89,8 @@ def register():
 def unregister():
     for obj in bpy.data.objects:
         _clear_compares(obj)
+        if obj.edit_layers.initialized:
+            obj.edit_layers.is_rebuilding = False
     ui.unregister_draw_handler()
     try:
         bpy.app.translations.unregister(__name__)

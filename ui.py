@@ -147,27 +147,31 @@ class EL_UL_layer_masks(bpy.types.UIList):
     ):
         col = layout.column(align=True)
         row = col.row(align=True)
-        use = item.share_mode == "USE"
-        if not use:
+        use = item.share_mode in ["COPY", "OVERRIDE"]
+        if not use or item.override_data:
             op = row.operator(EL_OT_edit_mask.bl_idname, icon="MOD_MASK", text="", emboss=True)
             op.uid = item.owner
             op.idx = index
-        if use: row.prop(item, "use_enabled", icon="CHECKBOX_DEHLT" if item.use_enabled else "CHECKBOX_HLT", icon_only=True, emboss=False)
+        if use: row.prop(item, "override_enabled", icon="CHECKBOX_HLT" if item.override_enabled else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
         row.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
         row.label(text=item.name)
-        if use: row.prop(item, "use_mix", icon="CHECKBOX_DEHLT" if item.use_mix else "CHECKBOX_HLT", icon_only=True, emboss=False)
+        if use: row.prop(item, "override_mix", icon="CHECKBOX_HLT" if item.override_mix else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
         row.prop(item, "mix", text="", slider=True)
-        if use: row.prop(item, "use_mix_mode", icon="CHECKBOX_DEHLT" if item.use_mix_mode else "CHECKBOX_HLT", icon_only=True, emboss=False)
+        if use: row.prop(item, "override_mix_mode", icon="CHECKBOX_HLT" if item.override_mix_mode else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
         row.prop(item, "mix_mode", text="")
         row.prop(item, "is_collapsed", icon=("RIGHTARROW_THIN" if item.is_collapsed else "DOWNARROW_HLT"), icon_only=True, emboss=False)
         if not item.is_collapsed:
             row = col.row(align=True)
-            row.prop(item, "name", text="", emboss=True)
+            if use: row.prop(item, "override_data", icon="CHECKBOX_HLT" if item.override_data else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
+            if use and item.shared_mask_not_found:
+                    row.prop(item, "name", text="", emboss=True, icon="NOT_FOUND")
+            else:
+                row.prop(item, "name", text="", emboss=True)
             row.prop(item, "share_mode", text="") 
             row.separator()
-            if use: row.prop(item, "use_bg", icon="CHECKBOX_DEHLT" if item.use_bg else "CHECKBOX_HLT", icon_only=True, emboss=False)
+            if use: row.prop(item, "override_bg", icon="CHECKBOX_HLT" if item.override_bg else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
             row.prop(item, "bg_color", text="")
-            if use: row.prop(item, "use_value", icon="CHECKBOX_DEHLT" if item.use_value else "CHECKBOX_HLT", icon_only=True, emboss=False)
+            if use: row.prop(item, "override_value", icon="CHECKBOX_HLT" if item.override_value else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
             row.prop(item, "value")
 
 class EL_UL_layers(bpy.types.UIList):

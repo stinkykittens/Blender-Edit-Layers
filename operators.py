@@ -1006,7 +1006,7 @@ class EL_OT_rebuild(bpy.types.Operator):
     def execute(self, context):
         if _guard_shape_keys(self, context):
             return {"CANCELLED"}
-        warnings = _rebuild(context.object, rebuild_br_base_meshes=True)
+        warnings = _rebuild(context.object, rebuild_br_base_meshes=True, shared_mask_update=True)
         if warnings:
             self.report({"WARNING"}, _T("Rebuilt ({count} warnings)").format(count=len(warnings)))
         else:
