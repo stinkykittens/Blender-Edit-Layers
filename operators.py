@@ -1403,7 +1403,6 @@ class EL_OT_edit_mask(bpy.types.Operator):
                 if i + 1 > vert_count:
                     continue
                 if type(c) is float:
-                    print(c)
                     attribute.data[i].color = [c, c, c, 1]
                 else:
                     attribute.data[i].color = [c[0], c[1], c[2], 1]

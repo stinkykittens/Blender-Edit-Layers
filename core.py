@@ -1,5 +1,7 @@
 """Diff engine: persistent IDs / snapshots / diff computation / apply"""
 
+import json
+
 import bmesh
 from mathutils import Vector
 
@@ -321,6 +323,7 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
     if faces:
         bmesh.ops.delete(bm, geom=faces, context="FACES_ONLY")
 
+    # Get Mix Factor from slider
     if ignore_mix_factor or not layer.has_mix_slider:
         factor = 1
     else:
@@ -331,6 +334,10 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
             if l.uid == parent:
                 factor *= min(max(l.factor_min + l.mix_factor * (l.factor_max - l.factor_min), l.factor_min), l.factor_max)
 
+    mask_data = {}
+    if len(layer.masks) > 0 and not layer.disable_masks:
+        mask_data = _compute_layer_mask_data(bm, layer)
+        print("MASKDATATATATAT: ", mask_data)
 
     # 4. Move vertices (delta)
     # Applied before creation so anchor-relative new vertices can reference
@@ -340,7 +347,12 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
         if v is None or not v.is_valid:
             warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
-        v.co += Vector(d) * factor
+
+        if len(mask_data) > 0:
+            v.co += Vector(d) * mask_data[int(i) - 1] * factor
+            # v.co += Vector(d) * factor
+        else:
+            v.co += Vector(d) * factor
 
     # 5. New vertices (JSON keys are strings, convert back to int)
     # With anchor data, restore the position as "anchor centroid + offset" so
@@ -422,3 +434,44 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
             v[cv] = crease
         if bv is not None:
             v[bv] = bevel
+
+
+def _compute_layer_mask_data(bm: bmesh.types.BMesh, layer):
+    result = {}
+    mask_data = {}
+    for mask in layer.masks:
+        mask_data[mask] = {}
+        if mask.data:
+            for i, c in json.loads(mask.data).items():
+                i = int(i)
+                if type(c) is float:
+                    mask_data[mask][i] = Vector((c, c, c))
+                else:
+                    mask_data[mask][i] = Vector((c[0], c[1], c[2]))
+
+    print(mask_data)
+
+    for mask in layer.masks:
+        print( mask_data[mask].keys())
+
+
+    for vi in range(len(bm.verts)):
+        for mask in layer.masks:
+
+            print (vi, vi in mask_data[mask])
+            if vi in mask_data[mask]:
+                print("JEEEE")
+                val = mask_data[mask][vi] * mask.value
+            else:
+                val = Vector(mask.bg_color)
+
+            if vi in result:
+                match mask.mix_mode:
+                    case "MIX":
+                        result[vi] = result[vi] + (val - result[vi]) * mask.mix
+            else:
+                match mask.mix_mode:
+                    case "MIX":
+                        result[vi] = val * mask.mix
+
+    return result
