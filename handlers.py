@@ -81,7 +81,7 @@ def _animation_start(scene, depsgraph):
         _rebuild(obj)
 
 def _pre_save(file):
-    for obj in bpy.context.view_layer.objects:
+    for obj in bpy.data.objects:
         _clear_compares(obj)
 
 def _post_save(file):
