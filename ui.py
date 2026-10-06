@@ -596,22 +596,23 @@ class EL_PT_panel(bpy.types.Panel):
             row.prop(stack, "bake_with_shape_keys", icon_only=True, icon="SHAPEKEY_DATA")
             row.operator(EL_OT_bake.bl_idname, text="Bake", icon="IMPORT")
             row.operator(EL_OT_bake_copy.bl_idname, text="Bake Duplicate", icon="EXPORT")
-        layer = stack.layers[stack.active_index]
-        if obj.mode == "EDIT" and layer.data:
-            data = json.loads(layer.data)
-            layout.label(text="--Select--")
-            row = layout.row(align=True)
-            row.operator(EL_OT_select.bl_idname, text=f"Moved Verts {len(data["moved"])}", icon="VERTEXSEL").mode = "MOVED_VERTS"
-            row.operator(EL_OT_select.bl_idname, text=f"New Verts {len(data["new_verts"])}", icon="VERTEXSEL").mode = "NEW_VERTS"
-            # vertex_selection = [v.index for v in bmesh.from_edit_mesh(bpy.context.edit_object.data).verts if v.select]
-            if stack.is_recording and rec_layer is not None:
-                layout.label(text="--Edits--")
+        if len(stack.layers) > 0:
+            layer = stack.layers[stack.active_index]
+            if obj.mode == "EDIT" and layer.data:
+                data = json.loads(layer.data)
+                layout.label(text="--Select--")
                 row = layout.row(align=True)
-                row.operator(EL_OT_bake.bl_idname, text="Automatic Anchors")
-                row.operator(EL_OT_bake.bl_idname, text="Static Anchors")
-                row.operator(EL_OT_bake.bl_idname, text="Custom Anchors") #TODO
-                row = layout.row(align=True)
-                row.operator(EL_OT_bake.bl_idname, text="Remove Selected")
+                row.operator(EL_OT_select.bl_idname, text=f"Moved Verts {len(data["moved"])}", icon="VERTEXSEL").mode = "MOVED_VERTS"
+                row.operator(EL_OT_select.bl_idname, text=f"New Verts {len(data["new_verts"])}", icon="VERTEXSEL").mode = "NEW_VERTS"
+                # vertex_selection = [v.index for v in bmesh.from_edit_mesh(bpy.context.edit_object.data).verts if v.select]
+                if stack.is_recording and rec_layer is not None:
+                    layout.label(text="--Edits--")
+                    row = layout.row(align=True)
+                    row.operator(EL_OT_bake.bl_idname, text="Automatic Anchors")
+                    row.operator(EL_OT_bake.bl_idname, text="Static Anchors")
+                    row.operator(EL_OT_bake.bl_idname, text="Custom Anchors") #TODO
+                    row = layout.row(align=True)
+                    row.operator(EL_OT_bake.bl_idname, text="Remove Selected")
 
 
         warnings = _last_warnings.get(obj.name)

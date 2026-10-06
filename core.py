@@ -337,27 +337,21 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
     mask_data = {}
     if len(layer.masks) > 0 and not layer.disable_masks:
         mask_data = _compute_layer_mask_data(bm, layer)
-        print("MASKDATATATATAT: ", mask_data)
 
     # 4. Move vertices (delta)
     # Applied before creation so anchor-relative new vertices can reference
     # the anchors' post-move positions (the diff is computed against them too)
     for i, d in data.get("moved", {}).items():
-        v = vmap.get(int(i))
+        id = int(i)
+        v = vmap.get(id)
         if v is None or not v.is_valid:
             warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
 
-        vi = int(i) - 1
-        if len(mask_data) > v.index and v.index != -1:
-            v.co += Vector(d) * mask_data[v.index] * factor
-            # v.co += Vector(d) * factor
-            print(vi, " VMAP: ", v.index)
+        if id in mask_data:
+            v.co += Vector(d) * mask_data[id] * factor
         else:
             v.co += Vector(d) * factor
-            if len(mask_data) > 0:
-                print("WHAA: ", vi)
-                print("VMAP: ", v.index)
 
     # 5. New vertices (JSON keys are strings, convert back to int)
     # With anchor data, restore the position as "anchor centroid + offset" so
@@ -454,29 +448,23 @@ def _compute_layer_mask_data(bm: bmesh.types.BMesh, layer):
                 else:
                     mask_data[mask][i] = Vector((c[0], c[1], c[2]))
 
-    print(mask_data)
+    attr = bm.verts.layers.int[ID_ATTR]
 
-    for mask in layer.masks:
-        print( mask_data[mask].keys())
-
-
-    for vi in range(len(bm.verts)):
+    for i, v in enumerate(bm.verts):
+        id = v[attr]
         for mask in layer.masks:
-
-            print (vi, vi in mask_data[mask])
-            if vi in mask_data[mask]:
-                print("JEEEE")
-                val = mask_data[mask][vi] * mask.value
+            if id in mask_data[mask]:
+                val = mask_data[mask][id] * mask.value
             else:
                 val = Vector(mask.bg_color)
-
-            if vi in result:
+        
+            if id in result:
                 match mask.mix_mode:
                     case "MIX":
-                        result[vi] = result[vi] + (val - result[vi]) * mask.mix
+                        result[id] = result[id] + (val - result[id]) * mask.mix
             else:
                 match mask.mix_mode:
                     case "MIX":
-                        result[vi] = val * mask.mix
+                        result[id] = val * mask.mix
 
     return result

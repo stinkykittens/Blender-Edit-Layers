@@ -1421,21 +1421,24 @@ class EL_OT_edit_mask(bpy.types.Operator):
         pos = next((i for i, l in enumerate(path) if l.uid == layer.uid), None) + 1
         _rebuild(obj, pos)
 
-        bpy.ops.object.mode_set(mode='VERTEX_PAINT')
         bpy.ops.geometry.color_attribute_add(name=stack.recording_mask_attr, color=[mask.bg_color[0], mask.bg_color[1], mask.bg_color[2], 1])
         obj.data.color_attributes.active_color_name = stack.recording_mask_attr
         attribute: bpy.types.FloatColorAttribute = obj.data.color_attributes[stack.recording_mask_attr]
+        id_attr = obj.data.attributes.get(ID_ATTR)
         vert_count = len(obj.data.vertices)
         if mask.data:
             data = json.loads(mask.data)
             for i, c in data.items():
                 i = int(i)
-                if i + 1 > vert_count:
+                idx = next((index for index, val in enumerate(id_attr.data) if val.value == i), None)
+                print(idx)
+                if not idx:
                     continue
                 if type(c) is float:
-                    attribute.data[i].color = [c, c, c, 1]
+                    attribute.data[idx].color = [c, c, c, 1]
                 else:
-                    attribute.data[i].color = [c[0], c[1], c[2], 1]
+                    attribute.data[idx].color = [c[0], c[1], c[2], 1]
+        bpy.ops.object.mode_set(mode='VERTEX_PAINT')
         return {"FINISHED"}
 
 class EL_OT_commit_mask(bpy.types.Operator):
@@ -1462,17 +1465,23 @@ class EL_OT_commit_mask(bpy.types.Operator):
             for l in stack.layers:
                 if l.uid == stack.recording_uid:
                     layer = l
+        
+        bpy.ops.object.mode_set(mode='OBJECT')
         mask: EL_LayerMask = layer.masks[stack.recording_mask]
         attribute: bpy.types.FloatColorAttribute = obj.data.color_attributes[stack.recording_mask_attr]
+        id_attr = obj.data.attributes.get(ID_ATTR)
         data = {}
         
         for i, c in enumerate(attribute.data):
             if math.isclose(c.color[0], mask.bg_color[0]) and math.isclose(c.color[1], mask.bg_color[1]) and math.isclose(c.color[2], mask.bg_color[2]):
                 continue
+
+            id = id_attr.data[i].value
+
             if math.isclose(c.color[0], c.color[1]) and math.isclose(c.color[0], c.color[2]):
-                data[i] = c.color[0]
+                data[id] = c.color[0]
             else:
-                data[i] = [c.color[0], c.color[1], c.color[2]]
+                data[id] = [c.color[0], c.color[1], c.color[2]]
 
         mask.data = json.dumps(data)
 
@@ -1481,7 +1490,6 @@ class EL_OT_commit_mask(bpy.types.Operator):
         # if stack.recording_mask_attr in obj.data.color_attributes:
         #     obj.data.color_attributes.remove(obj.data.color_attributes[stack.recording_mask_attr])
         stack.recording_mask_attr = ""
-        bpy.ops.object.mode_set(mode='OBJECT')
         _safe_rebuild(obj)
 
         return {"FINISHED"}
