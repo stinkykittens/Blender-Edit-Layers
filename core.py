@@ -348,8 +348,9 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
             warnings.append(_T("{layer}: missing vertex {i} to move").format(layer=layer.name, i=i))
             continue
 
-        if len(mask_data) > 0:
-            v.co += Vector(d) * mask_data[int(i) - 1] * factor
+        vi = int(i) - 1
+        if len(mask_data) > vi:
+            v.co += Vector(d) * mask_data[vi] * factor
             # v.co += Vector(d) * factor
         else:
             v.co += Vector(d) * factor

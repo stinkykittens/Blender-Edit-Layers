@@ -218,7 +218,7 @@ class EL_Layer(bpy.types.PropertyGroup):
 
     masks: CollectionProperty(type=EL_LayerMask)
     selected_mask: IntProperty(default=0)
-    disable_masks: BoolProperty(default=False)
+    disable_masks: BoolProperty(default=False, update=_on_enabled_update)
     preview_masks: BoolProperty(default=False)
 
     internal_enabled: BoolProperty(default=True)
