@@ -125,6 +125,17 @@ def _update_compare(self, context):
     else:
         bpy.ops.edit_layers.compare_clear()
 
+def _get_compare_branch_name(self):
+    for i, br in enumerate(bpy.context.object.edit_layers.branches):
+        if i == self.compare_branch:
+            return br.name
+    return self.name
+
+def _set_compare_branch_name(self, v):
+    for i, br in enumerate(bpy.context.object.edit_layers.branches):
+        if br.name == v:
+            self.compare_branch = i
+    
 def _get_shared_mask_names(self, context):
     shared = []
     for l in context.object.edit_layers.layers:
@@ -135,6 +146,7 @@ def _get_shared_mask_names(self, context):
 
 def _update_shared_mask_name(self, context):
     self.name = self.shared_name
+
 
 class EL_LayerMask(bpy.types.PropertyGroup):
     owner: IntProperty()
@@ -236,9 +248,13 @@ class EL_Branch(bpy.types.PropertyGroup):
     exclude_from_comparing: BoolProperty(default=False, name="Exclude from comparing all branches")
     is_comparing: BoolProperty(default=False)
     compare_mode: EnumProperty(name="Compare Mode", 
-            items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", ""), ("TILE_QUAD", "Tile Quad", ""), ("TILE_SINGLE", "Tile Single", "")],
+            items=[("ALL", "All Branches", ""), ("BRANCH", "Branch", ""), ("TILE", "Tile", "Compare against self with realtime updates"), ("TILE_BRANCH", "Tile Branch", "Enables Snapping")],
+            default="ALL",
             update=_update_compare)
-    compare_branch: IntProperty(default=0, update=_update_compare)
+    compare_tile_mode: EnumProperty(name="Tile Mode",
+                                    items=[("SINGLE", "Single", ""), ("TILE", "Tile", ""), ("QUAD", "Tile Quad", "")])
+    compare_branch: IntProperty(default=-1, update=_update_compare)
+    compare_branch_name: StringProperty(default="", set=_set_compare_branch_name, get=_get_compare_branch_name)
     compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0], update=_update_compare)
     compare_tile_weld: BoolProperty(default=False, update=_update_compare)
     compare_tile_boolean_exact: BoolProperty(default=False, update=_update_compare)

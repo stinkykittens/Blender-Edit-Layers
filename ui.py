@@ -521,9 +521,12 @@ class EL_PT_panel(bpy.types.Panel):
         sub_row.ui_units_x = 8
         sub_row.prop(stack, "is_comparing", emboss=True, icon="MOD_MIRROR", toggle=True, icon_only=True)
         sub_row.prop(branch, "compare_mode", text="")
-        if branch.compare_mode == "BRANCH":
-            sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
-        elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
+        if branch.compare_mode in ["TILE", "TILE_BRANCH"]:
+            sub_row.prop(branch, "compare_tile_mode", text="")
+        if branch.compare_mode in ["BRANCH", "TILE_BRANCH"]:
+            sub_row.prop_search(branch, "compare_branch_name", stack, "branches", text="")
+            # sub_row.prop(branch, "compare_branch", text=stack.branches[branch.compare_branch].name, expand=True)
+        elif branch.compare_mode in ["TILE"]:
             sub_row.prop(branch, "compare_tile_weld", icon="AUTOMERGE_OFF", icon_only=True)
             if branch.compare_tile_weld:
                 sub_row.prop(branch, "compare_tile_boolean_exact", icon="MOD_BOOLEAN", icon_only=True)

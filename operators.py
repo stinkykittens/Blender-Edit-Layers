@@ -866,6 +866,9 @@ class EL_OT_compare(bpy.types.Operator):
         branch = stack.branches[stack.active_branch]
         _clear_compares(obj)
 
+        if branch.compare_branch == -1:
+            branch.compare_branch = stack.active_branch
+
         if branch.compare_mode == "ALL":
             n = 1
             for bi, br in enumerate(stack.branches):
@@ -880,48 +883,48 @@ class EL_OT_compare(bpy.types.Operator):
             dup.location.x += branch.compare_offset[0]
             dup.location.y += branch.compare_offset[1]
             dup.location.z += branch.compare_offset[2]
-        elif branch.compare_mode == "TILE":
+        elif branch.compare_mode in ["TILE", "TILE_BRANCH"]:
             offset = branch.compare_offset
+            tile_branch = branch.compare_mode == "TILE_BRANCH"
+            bi = branch.compare_branch if tile_branch else stack.active_branch
             for i in range(3):
                 if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch)
+                dup = self.add_comparison(bi)
                 dup.location[i] += offset[i]
-                dup = self.add_comparison(stack.active_branch)
+                if tile_branch: dup.data = dup.data.copy()
+
+                if branch.compare_tile_mode == "SINGLE": continue
+
+                dup = self.add_comparison(bi)
                 dup.location[i] -= offset[i]
-        elif branch.compare_mode == "TILE_QUAD":
-            offset = branch.compare_offset
-            for i in range(3):
-                if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch)
-                dup.location[i] += offset[i]
-                dup = self.add_comparison(stack.active_branch)
-                dup.location[i] -= offset[i]
+                if tile_branch: dup.data = dup.data.copy()
+
+                if branch.compare_tile_mode == "TILE": continue
+
                 for i2 in range(3):
                     if i2 <= i or offset[i2] == 0: continue
-                    dup = self.add_comparison(stack.active_branch)
+                    dup = self.add_comparison(bi)
                     dup.location[i] += offset[i]
                     dup.location[i2] += offset[i2]
-                    dup = self.add_comparison(stack.active_branch)
+                    if tile_branch: dup.data = dup.data.copy()
+                    dup = self.add_comparison(bi)
                     dup.location[i] += offset[i]
                     dup.location[i2] -= offset[i2]
-                    dup = self.add_comparison(stack.active_branch)
+                    if tile_branch: dup.data = dup.data.copy()
+                    dup = self.add_comparison(bi)
                     dup.location[i] -= offset[i]
                     dup.location[i2] += offset[i2]
-                    dup = self.add_comparison(stack.active_branch)
+                    if tile_branch: dup.data = dup.data.copy()
+                    dup = self.add_comparison(bi)
                     dup.location[i] -= offset[i]
                     dup.location[i2] -= offset[i2]
-        elif branch.compare_mode == "TILE_SINGLE":
-            offset = branch.compare_offset
-            for i in range(3):
-                if offset[i] == 0: continue
-                dup = self.add_comparison(stack.active_branch)
-                dup.location[i] += offset[i]
+                    if tile_branch: dup.data = dup.data.copy()
 
         if not stack.compare_collection:
             return {"FINISHED"}
 
         # Add Boolean and wield to clean up tile compares
-        if branch.compare_tile_weld and branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
+        if branch.compare_tile_weld and branch.compare_mode == "TILE":
             stack.compare_collection.hide_viewport = True
             for o in stack.compare_collection.objects:
                 boolean = obj.modifiers.new(MOD_TILE_BOOLEAN, 'BOOLEAN')
@@ -970,7 +973,7 @@ class EL_OT_reset_compare_offset(bpy.types.Operator):
         branch = stack.branches[stack.active_branch]
         if branch.compare_mode == "ALL":
             branch.compare_offset = (max(context.object.dimensions.x * 1.5, 2.0), 0, 0)
-        elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_SINGLE"]:
+        elif branch.compare_mode in ["TILE", "TILE_QUAD", "TILE_BRANCH"]:
             branch.compare_offset = (2, 2, 0)
         else:
             branch.compare_offset = (0, 0, 0)
