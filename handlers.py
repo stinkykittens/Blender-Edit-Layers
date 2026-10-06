@@ -81,10 +81,14 @@ def _animation_start(scene, depsgraph):
         _rebuild(obj)
 
 def _pre_save(file):
-    for obj in bpy.data.objects:
+    for obj in bpy.context.view_layer.objects:
         _clear_compares(obj)
 
 def _post_save(file):
-    for obj in bpy.data.objects:
+    active = bpy.context.view_layer.objects.active
+    for obj in bpy.context.view_layer.objects:
         if obj.edit_layers.initialized and obj.edit_layers.is_comparing:
-            obj.edit_layers.compare()
+            if obj.visible_get():
+                bpy.context.view_layer.objects.active = obj
+                bpy.ops.edit_layers.compare()
+    bpy.context.view_layer.objects.active = active
