@@ -926,6 +926,7 @@ class EL_OT_compare(bpy.types.Operator):
         # Add Boolean and wield to clean up tile compares
         if branch.compare_tile_weld and branch.compare_mode == "TILE":
             stack.compare_collection.hide_viewport = True
+            stack.compare_collection.hide_render = True
             for o in stack.compare_collection.objects:
                 boolean = obj.modifiers.new(MOD_TILE_BOOLEAN, 'BOOLEAN')
                 boolean.show_in_editmode = True
@@ -1110,7 +1111,7 @@ class EL_OT_set_branch_data(bpy.types.Operator):
     bl_idname = "edit_layers.set_branch_data"
     bl_label = "Set Branch Data"
     bl_options = {"REGISTER", "UNDO"}
-    bl_description = "Set a data object for the current branch to preserve Vertex Groups/Weights/Colors and Uvs accurately."
+    bl_description = "Set a data object for the current branch to preserve Vertex Groups/Weights/Colors and UVs."
 
     @classmethod
     def poll(cls, context):
@@ -1134,6 +1135,45 @@ class EL_OT_set_branch_data(bpy.types.Operator):
         data_obj.hide_viewport = True
         data_obj.hide_render = True
         br.data_obj = data_obj.name
+        return {"FINISHED"}
+
+class EL_OT_reset_branch_data(bpy.types.Operator):
+    """Merge the selected layer into the previous (upper) layer"""
+
+    bl_idname = "edit_layers.reset_branch_data"
+    bl_label = "Delete Branch Data"
+    bl_options = {"REGISTER", "UNDO"}
+    bl_description = "Delete Branch Data"
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context) and context.mode == "OBJECT"
+
+    def execute(self, context):
+        stack = context.object.edit_layers
+        br = stack.branches[stack.active_branch]
+
+        if br.data_obj != "" and any(c.name == br.data_obj for c in context.object.children):
+            bpy.data.objects.remove(next((c for c in context.object.children if c.name == br.data_obj), None), do_unlink=True)
+        
+        br.data_obj = ""
+        return {"FINISHED"}
+
+class EL_OT_reset_branch_data_transfer(bpy.types.Operator):
+    """Merge the selected layer into the previous (upper) layer"""
+
+    bl_idname = "edit_layers.reset_branch_data_transfer"
+    bl_label = "Reset Data Transfer"
+    bl_options = {"REGISTER", "UNDO"}
+    bl_description = "Topology has changed, fallback to NEAREST."
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_stack_idle(context) and context.mode == "OBJECT"
+
+    def execute(self, context):
+        stack = context.object.edit_layers
+        br = stack.branches[stack.active_branch].data_transfer_mode = "NEAREST"
         return {"FINISHED"}
 
 class EL_OT_select(bpy.types.Operator):

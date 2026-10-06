@@ -247,7 +247,7 @@ def _is_overriden(stack, branch_index, uid, tmp):
     return False
 
 def _transfer_mesh_data(obj: types.Object, source_obj: types.Object):
-    if _active_branch_has_data_obj(obj) and obj.edit_layers.branches[obj.edit_layers.active_branch].data_transfer_mode == "TOPOLOGY":
+    if _active_branch_has_data_obj(obj) and obj.edit_layers.branches[obj.edit_layers.active_branch].data_transfer_mode == "TOPOLOGY" and len(obj.data.vertices) == len(source_obj.data.vertices):
         vert_mapping = "TOPOLOGY"
         loop_mapping = "TOPOLOGY"
     else:

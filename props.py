@@ -252,7 +252,8 @@ class EL_Branch(bpy.types.PropertyGroup):
             default="ALL",
             update=_update_compare)
     compare_tile_mode: EnumProperty(name="Tile Mode",
-                                    items=[("SINGLE", "Single", ""), ("TILE", "Tile", ""), ("QUAD", "Tile Quad", "")])
+                                    items=[("SINGLE", "Single", ""), ("TILE", "Tile", ""), ("QUAD", "Tile Quad", "")],
+                                    update=_update_compare)
     compare_branch: IntProperty(default=-1, update=_update_compare)
     compare_branch_name: StringProperty(default="", set=_set_compare_branch_name, get=_get_compare_branch_name)
     compare_offset: FloatVectorProperty(name="Offset", default=[0, 0, 0], update=_update_compare)

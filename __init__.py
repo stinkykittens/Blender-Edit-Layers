@@ -44,6 +44,8 @@ classes = (
     operators.EL_OT_compare_clear,
     operators.EL_OT_reset_compare_offset,
     operators.EL_OT_set_branch_data,
+    operators.EL_OT_reset_branch_data,
+    operators.EL_OT_reset_branch_data_transfer,
     operators.EL_OT_notice_clear,
     operators.EL_OT_rebuild,
     operators.EL_OT_detach,

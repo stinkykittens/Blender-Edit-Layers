@@ -14,6 +14,8 @@ from .operators import (
     EL_OT_bake_upto,
     EL_OT_select,
     EL_OT_set_branch_data,
+    EL_OT_reset_branch_data,
+    EL_OT_reset_branch_data_transfer,
     EL_OT_branch_create,
     EL_OT_branch_remove,
     EL_OT_cancel,
@@ -511,10 +513,15 @@ class EL_PT_panel(bpy.types.Panel):
         side.operator(EL_OT_branch_remove.bl_idname, text="", icon="REMOVE")
         side.menu(EL_MT_branch_menu.bl_idname, text="", icon="DOWNARROW_HLT")
         side.separator()
-        sub = col.row(align=True)
+        # Data transfer and Comparing
         branch = stack.branches[stack.active_branch]
+        sub = col.row(align=True)
         sub.operator(EL_OT_set_branch_data.bl_idname, icon="MOD_DATA_TRANSFER")
         if _active_branch_has_data_obj(obj):
+            sub.operator(EL_OT_reset_branch_data.bl_idname, text="", icon="X")
+            source_obj = next((c for c in obj.children if c.name == stack.branches[stack.active_branch].data_obj), None)
+            if branch.data_transfer_mode == "TOPOLOGY" and len(obj.data.vertices) != len(source_obj.data.vertices):
+                sub.operator(EL_OT_reset_branch_data_transfer.bl_idname, text="", icon="WARNING_LARGE")
             sub.prop_menu_enum(branch, "data_transfer_mode", text="Transfer: " + branch.data_transfer_mode)
         sub = col.row(align=True)
         sub_row = sub.row(align=True)
@@ -539,8 +546,8 @@ class EL_PT_panel(bpy.types.Panel):
             sub_row.alignment = "RIGHT"
             sub_row.prop(branch, "compare_offset")
 
-            side.separator()
-            side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
+        side.separator()
+        side.operator(EL_OT_bake.bl_idname, text="", icon="TEXTURE")
 
         # Layers (path of the active branch)
         col = layout.column()
