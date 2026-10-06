@@ -5,7 +5,7 @@ import math
 
 import bpy
 import bmesh
-from bpy.props import EnumProperty
+from bpy.props import EnumProperty, BoolProperty
 
 from .props import EL_Layer, EL_LayerMask, EL_Stack
 
@@ -1180,6 +1180,7 @@ class EL_OT_select(bpy.types.Operator):
     bl_idname = "edit_layers.select"
     bl_label = "Select"
     bl_options = {"REGISTER", "UNDO"}
+    bl_description = "Hold 'Shift' to expand selection"
 
     mode: EnumProperty(
             name="Mode",
@@ -1191,52 +1192,38 @@ class EL_OT_select(bpy.types.Operator):
             ],
             default="NEW_VERTS",
         )
+
+    shift_pressed: BoolProperty()
     
     @classmethod
     def poll(cls, context):
         return _poll_mesh_object(context)
 
+    def invoke(self, context, event):
+        self.shift_pressed = event.shift
+        return self.execute(context)
+
     def execute(self, context):
-        obj = context.edit_object
-        stack = context.object.edit_layers
+        obj = context.object
+        stack = obj.edit_layers
         layer = stack.layers[stack.active_index]
-
-        if layer is None or obj is None:
-            return {"CANCELLED"}
-
         bm = bmesh.from_edit_mesh(obj.data)
 
+        if layer is None or obj is None or not ID_ATTR in bm.verts.layers.int:
+            return {"CANCELLED"}
+
         data = json.loads(layer.data)
+        attr = bm.verts.layers.int[ID_ATTR]
+        ids = {int(k) for k in data.get("moved" if self.mode == "MOVED_VERTS" else "new_verts", {})}
 
-        indices = []
-        if self.mode == "MOVED_VERTS":
-            indices = data["moved"].keys()
-        elif self.mode == "NEW_VERTS":
-            indices = data["new_verts"].keys()
-        elif self.mode == "NEW_EDGES":
-            indices = data["new_edges"] #TODO
-        elif self.mode == "NEW_FACES":
-            indices = data["new_faces"]
-        
-        if self.mode == "NEW_FACES":
-            bpy.ops.mesh.select_mode(type="FACE")
-            face_indices = []
+        bpy.ops.mesh.select_mode(type="VERT")
+        if not self.shift_pressed:
+            bpy.ops.mesh.select_all(action='DESELECT')
 
-            for f in bm.faces:
-                f_verts = {v.index for v in f.verts}
-                for v in indices:
-                    verts = {int(i) - 1 for i in v}
-                    if f_verts == verts:
-                        face_indices.append(f.index)
-            for i in face_indices:
-                if i is not None and 0 <= i < len(bm.faces):
-                    bm.faces[i].select = True
-        else:
-            bpy.ops.mesh.select_mode(type="VERT")
-            indices = [int(i) - 1 for i in indices] #TODO: Why i have to substract here
-            for i in indices:
-                if 0 <= i < len(bm.verts):
-                    bm.verts[i].select = True
+        for i, v in enumerate(bm.verts):
+            if v[attr] in ids:
+                bm.verts[i].select = True
+
         bmesh.update_edit_mesh(obj.data, loop_triangles=False, destructive=False)
         return {"FINISHED"}
 

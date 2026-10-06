@@ -349,11 +349,15 @@ def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False)
             continue
 
         vi = int(i) - 1
-        if len(mask_data) > vi:
-            v.co += Vector(d) * mask_data[vi] * factor
+        if len(mask_data) > v.index and v.index != -1:
+            v.co += Vector(d) * mask_data[v.index] * factor
             # v.co += Vector(d) * factor
+            print(vi, " VMAP: ", v.index)
         else:
             v.co += Vector(d) * factor
+            if len(mask_data) > 0:
+                print("WHAA: ", vi)
+                print("VMAP: ", v.index)
 
     # 5. New vertices (JSON keys are strings, convert back to int)
     # With anchor data, restore the position as "anchor centroid + offset" so
