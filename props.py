@@ -67,6 +67,13 @@ def _mask_update(self, context):
         ):
             _rebuild(obj, rebuild_br_base_meshes=True, shared_mask_update=True)
 
+def _update_layer_name(self, context):
+    for mod in self.modifiers:
+        mod.reset_name()
+
+def _update_mod_name(self, context):
+    self.reset_name()
+
 def _set_enabled(self, v):
     self.internal_enabled = v
 
@@ -193,10 +200,26 @@ class EL_LayerMask(bpy.types.PropertyGroup):
         if not self.override_value:
             self.value = mask.value
 
+class EL_LayerModifier(bpy.types.PropertyGroup):
+    owner: IntProperty()
+    name: StringProperty(update=_update_mod_name)
+    muid: IntProperty()
+    enabled: BoolProperty(default=True)
+
+    def get_mod(self) -> bpy.types.Modifier:
+        return next((m for m in bpy.context.object.modifiers if m.persistent_uid == self.muid), None)
+
+    def reset_name(self):
+        stack = bpy.context.object.edit_layers
+        layer = next((l for l in stack.layers if l.uid == self.owner), None)
+        mod = self.get_mod()
+        print(mod, layer)
+        if mod and layer:
+            mod.name = f"{layer.uid}_{layer.name}_{self.name}"
 
 #TODO: a way to delete vertexes from the data or edit its anchors; add empty layer; Branch unique slider
 class EL_Layer(bpy.types.PropertyGroup):
-    name: StringProperty(name="Name", default="Layer")
+    name: StringProperty(name="Name", default="Layer", update=_update_layer_name)
     enabled: BoolProperty(name="Enabled", default=True, update=_on_enabled_update, get=_get_enabled, set=_set_enabled)
     mix_factor: FloatProperty(name="Mix", min=0, max=1, default=1, update=_on_enabled_update)
     has_mix_slider: BoolProperty(name="Has Mix Slider", default=False)
@@ -214,7 +237,7 @@ class EL_Layer(bpy.types.PropertyGroup):
     # UID of the parent or grand parent this layer expands/folds and disables with
     hierarchy_parent: IntProperty(default=0, get=_get_hierarchy_parent)
     # Diff JSON
-    data: StringProperty(default="")
+    data: StringProperty(default="{\"moved\": {}, \"new_verts\": {}, \"deleted_verts\": [], \"new_edges\": [], \"deleted_edges\": [], \"new_faces\": [], \"deleted_faces\": [], \"anchors\": {}, \"face_attrs\": [], \"edge_attrs\": [], \"vert_attrs\": []}")
 
     masks: CollectionProperty(type=EL_LayerMask)
     selected_mask: IntProperty(default=0)
@@ -223,6 +246,9 @@ class EL_Layer(bpy.types.PropertyGroup):
 
     internal_enabled: BoolProperty(default=True)
     override_base_mesh: BoolProperty(name="Override Base Mesh", get=_get_override_base_mesh, set=_set_override_base_mesh)
+
+    modifiers: CollectionProperty(type=EL_LayerModifier)
+    selected_mod: IntProperty(default=0)
 
 
 class EL_Branch(bpy.types.PropertyGroup):

@@ -271,7 +271,7 @@ def _find_face(vmap, idl, ids):
     return None
 
 
-def _apply_layer(bm, idl, data, warnings, layer, stack, ignore_mix_factor=False):
+def _apply_layer(bm: bmesh.types.BMesh, idl, data, warnings, layer, stack, ignore_mix_factor=False):
     """Apply one layer's diff to the bmesh
 
     Deletions whose target is missing are skipped silently (it just means an

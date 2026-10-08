@@ -1494,3 +1494,70 @@ class EL_OT_commit_mask(bpy.types.Operator):
 
         return {"FINISHED"}
 
+
+class EL_OT_add_modifier(bpy.types.Operator):
+    bl_idname = "edit_layers.add_layer_modifier"
+    bl_label = "Add Modifier"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        layer: EL_Layer
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+
+        if obj.modifiers.active is None:
+            return {"CANCELLED"}
+        
+        mod = obj.modifiers.active
+        lmod = layer.modifiers.add()
+
+        lmod.owner = self.uid
+        lmod.muid = mod.persistent_uid
+        lmod.name = mod.name
+        lmod.reset_name()
+
+        mod.show_in_editmode = False
+        mod.show_on_cage = False
+        mod.show_render = False
+        mod.show_viewport = False
+        mod.show_expanded = False
+
+        return {"FINISHED"}
+
+class EL_OT_remove_modifier(bpy.types.Operator):
+    bl_idname = "edit_layers.remove_layer_modifier"
+    bl_label = "Remove"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        layer: EL_Layer
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+        
+        layer.modifiers.remove(layer.selected_mod)
+
+        return {"FINISHED"}

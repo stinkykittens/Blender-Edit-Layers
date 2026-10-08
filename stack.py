@@ -132,6 +132,31 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
             idl = _ensure_id_layer(bm)
             _apply_layer(bm, idl, json.loads(layer.data), warnings, layer, stack, ignore_mix_factor=ignore_mix_factor)
             applied.append(layer.uid)
+
+            # Apply Modifiers
+            if len(layer.modifiers) > 0:
+                tmp_mesh = mesh.copy()
+                bm.to_mesh(tmp_mesh)
+                bm.free()
+                tmp = bpy.data.objects.new("Temp_Modifier_Target"+layer.name, tmp_mesh)
+                bpy.context.collection.objects.link(tmp)
+                for lmod in layer.modifiers:
+                    orig_mod = lmod.get_mod()
+                    new_mod = tmp.modifiers.new(orig_mod.name, orig_mod.type)
+                    for prop in orig_mod.bl_rna.properties:
+                        if not prop.is_readonly:
+                            setattr(new_mod, prop.identifier, getattr(orig_mod, prop.identifier))
+
+                    bpy.context.view_layer.objects.active = tmp
+                    bpy.ops.object.modifier_apply(modifier=new_mod.name)
+                tmp_mesh.update()
+                bm = bmesh.new()
+                bm.from_mesh(tmp_mesh)
+                bm.verts.ensure_lookup_table()
+                bm.faces.ensure_lookup_table()
+                bpy.data.objects.remove(tmp, do_unlink=True)
+                bpy.data.meshes.remove(tmp_mesh, do_unlink=True)
+
         if stack.shade_smooth:
             for f in bm.faces:
                 f.smooth = True

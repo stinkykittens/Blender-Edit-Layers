@@ -5,7 +5,7 @@ import json
 import bpy
 import bmesh
 
-from .props import EL_LayerMask
+from .props import EL_LayerMask, EL_LayerModifier
 
 from .common import _blocked_notice, _last_warnings
 from .i18n import _T
@@ -40,6 +40,8 @@ from .operators import (
     EL_OT_move_layer_mask,
     EL_OT_edit_mask,
     EL_OT_commit_mask,
+    EL_OT_add_modifier,
+    EL_OT_remove_modifier,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -185,6 +187,21 @@ class EL_UL_layer_masks(bpy.types.UIList):
             if use: row.prop(item, "override_value", icon="CHECKBOX_HLT" if item.override_value else "CHECKBOX_DEHLT", icon_only=True, emboss=False)
             row.prop(item, "value")
 
+class EL_UL_layer_mods(bpy.types.UIList):
+    use_filter_show = False
+    """Radio buttons mark the active branch; shared/own layer counts on the right"""
+
+    def draw_item(
+        self, context, layout: bpy.types.UILayout, data, item: EL_LayerModifier, icon,
+        active_data, active_propname, index=0, flt_flag=0,
+    ):
+        col = layout.column(align=True)
+        row = col.row(align=True)
+
+        row.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
+        row.prop(item, "name", text="", emboss=False)
+
+
 class EL_UL_layers(bpy.types.UIList):
     """Show only layers on the active branch path, in root-to-head order
 
@@ -250,6 +267,8 @@ class EL_UL_layers(bpy.types.UIList):
             ind = right.row(align=True)
             ind.ui_units_x = 0.5
             ind.template_node_socket(color=(*branch.color, 1.0))
+        if len(item.modifiers) > 0:
+            right.label(text="", icon="MODIFIER_DATA")
         if len(item.masks) > 0:
             right.prop(item, "disable_masks", icon="MOD_MASK" if not item.disable_masks else "HIDE_ON", icon_only=True, emboss=False)
         right.prop(item, "enabled", text="", icon="HIDE_OFF" if item.enabled else "HIDE_ON", emboss=False)
@@ -309,6 +328,14 @@ class EL_UL_layers(bpy.types.UIList):
                 sub_colum.template_list("EL_UL_layer_masks", "", item, "masks", item, "selected_mask", rows=2)
 
             sub_colum.prop(item, "data")
+
+            # Modifiers
+            has_mods = len(item.modifiers) > 0
+            sub_row = sub_colum.row()
+            sub_row.operator(EL_OT_add_modifier.bl_idname, icon="MODIFIER_DATA").uid = item.uid
+            if has_mods:
+                sub_row.operator(EL_OT_remove_modifier.bl_idname, icon="X").uid = item.uid
+                sub_colum.template_list("EL_UL_layer_mods", "", item, "modifiers", item, "selected_mod", rows=2)
             
 
 

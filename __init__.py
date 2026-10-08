@@ -22,6 +22,7 @@ from .stack import _rebuild, _clear_compares
 
 classes = (
     props.EL_LayerMask,
+    props.EL_LayerModifier,
     props.EL_Layer,
     props.EL_Branch,
     props.EL_Stack,
@@ -58,7 +59,10 @@ classes = (
     operators.EL_OT_move_layer_mask,
     operators.EL_OT_edit_mask,
     operators.EL_OT_commit_mask,
+    operators.EL_OT_add_modifier,
+    operators.EL_OT_remove_modifier,
     ui.EL_UL_layer_masks,
+    ui.EL_UL_layer_mods,
     ui.EL_UL_layers,
     ui.EL_UL_branches,
     ui.EL_PT_panel,
