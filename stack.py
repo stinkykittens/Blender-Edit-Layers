@@ -147,8 +147,10 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
                         if not prop.is_readonly:
                             setattr(new_mod, prop.identifier, getattr(orig_mod, prop.identifier))
 
+                    active = bpy.context.view_layer.objects.active
                     bpy.context.view_layer.objects.active = tmp
                     bpy.ops.object.modifier_apply(modifier=new_mod.name)
+                    bpy.context.view_layer.objects.active = active
                 tmp_mesh.update()
                 bm = bmesh.new()
                 bm.from_mesh(tmp_mesh)

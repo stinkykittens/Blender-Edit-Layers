@@ -213,7 +213,6 @@ class EL_LayerModifier(bpy.types.PropertyGroup):
         stack = bpy.context.object.edit_layers
         layer = next((l for l in stack.layers if l.uid == self.owner), None)
         mod = self.get_mod()
-        print(mod, layer)
         if mod and layer:
             mod.name = f"{layer.uid}_{layer.name}_{self.name}"
 
