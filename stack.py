@@ -106,7 +106,6 @@ def _branch_layer_stats(stack, branch_index):
     own = len(mine - others)
     return len(mine) - own, own
 
-
 def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_enabled=True, upto=None, ignore_mix_factor=False):
     """Apply the layers of path in order onto a copy of the base mesh, write to mesh
 
@@ -135,29 +134,42 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
 
             # Apply Modifiers
             if len(layer.modifiers) > 0:
+                bm.to_mesh(mesh)
                 tmp_mesh = mesh.copy()
-                bm.to_mesh(tmp_mesh)
                 bm.free()
-                tmp = bpy.data.objects.new("Temp_Modifier_Target"+layer.name, tmp_mesh)
+                tmp = bpy.data.objects.new("temp_modifiers", tmp_mesh)
                 bpy.context.collection.objects.link(tmp)
                 for lmod in layer.modifiers:
                     orig_mod = lmod.get_mod()
+                    print(orig_mod.name)
                     new_mod = tmp.modifiers.new(orig_mod.name, orig_mod.type)
                     for prop in orig_mod.bl_rna.properties:
                         if not prop.is_readonly:
                             setattr(new_mod, prop.identifier, getattr(orig_mod, prop.identifier))
-
+        
                     active = bpy.context.view_layer.objects.active
                     bpy.context.view_layer.objects.active = tmp
                     bpy.ops.object.modifier_apply(modifier=new_mod.name)
                     bpy.context.view_layer.objects.active = active
                 tmp_mesh.update()
+                mesh.update() # idk if its necessary
                 bm = bmesh.new()
                 bm.from_mesh(tmp_mesh)
                 bm.verts.ensure_lookup_table()
                 bm.faces.ensure_lookup_table()
                 bpy.data.objects.remove(tmp, do_unlink=True)
                 bpy.data.meshes.remove(tmp_mesh, do_unlink=True)
+                idl = _ensure_id_layer(bm)
+                # Assign IDs to new vertices created through modifiers
+                if len(mesh.vertices) < len(bm.verts):
+                    next_id = max((v[idl] for v in bm.verts), default=0) + 1
+                    ids = []
+                    for v in bm.verts:
+                        if v[idl] == 0 or v[idl] in ids:
+                            v[idl] = next_id
+                            next_id += 1
+                        else:
+                            ids.append(v[idl])
 
         if stack.shade_smooth:
             for f in bm.faces:

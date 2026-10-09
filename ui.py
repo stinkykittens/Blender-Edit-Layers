@@ -327,7 +327,7 @@ class EL_UL_layers(bpy.types.UIList):
                 sub_row = sub_colum.row(align=True)
                 sub_colum.template_list("EL_UL_layer_masks", "", item, "masks", item, "selected_mask", rows=2)
 
-            sub_colum.prop(item, "data")
+            # sub_colum.prop(item, "data")
 
             # Modifiers
             has_mods = len(item.modifiers) > 0
@@ -336,7 +336,6 @@ class EL_UL_layers(bpy.types.UIList):
             if has_mods:
                 sub_row.operator(EL_OT_remove_modifier.bl_idname, icon="X").uid = item.uid
                 sub_colum.template_list("EL_UL_layer_mods", "", item, "modifiers", item, "selected_mod", rows=2)
-            
 
 
     def filter_items(self, context, data, propname):
