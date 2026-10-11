@@ -1561,3 +1561,28 @@ class EL_OT_remove_modifier(bpy.types.Operator):
         layer.modifiers.remove(layer.selected_mod)
 
         return {"FINISHED"}
+
+class EL_OT_reset_modifier_base_id(bpy.types.Operator):
+    bl_idname = "edit_layers.reset_mod_id"
+    bl_label = "Reset Modifier Base ID"
+    bl_options = {"REGISTER", "UNDO"}
+
+    uid: bpy.props.IntProperty(default=-1)
+
+    @classmethod
+    def poll(cls, context):
+        return _poll_mesh_object(context) and context.object.edit_layers.initialized
+
+    def execute(self, context):
+        obj = context.object
+        stack = context.object.edit_layers
+        layer: EL_Layer
+        if self.uid == -1:
+            layer = stack.layers[stack.active_index]
+        else:
+            for l in stack.layers:
+                if l.uid == self.uid:
+                    layer = l
+        layer.mod_id = -1
+        _rebuild(obj)
+        return {"FINISHED"}

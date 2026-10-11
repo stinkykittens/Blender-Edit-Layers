@@ -61,6 +61,7 @@ classes = (
     operators.EL_OT_commit_mask,
     operators.EL_OT_add_modifier,
     operators.EL_OT_remove_modifier,
+    operators.EL_OT_reset_modifier_base_id,
     ui.EL_UL_layer_masks,
     ui.EL_UL_layer_mods,
     ui.EL_UL_layers,

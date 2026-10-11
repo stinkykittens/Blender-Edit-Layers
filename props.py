@@ -248,6 +248,7 @@ class EL_Layer(bpy.types.PropertyGroup):
 
     modifiers: CollectionProperty(type=EL_LayerModifier)
     selected_mod: IntProperty(default=0)
+    mod_id: IntProperty(default=-1)
 
 
 class EL_Branch(bpy.types.PropertyGroup):

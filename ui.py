@@ -42,6 +42,7 @@ from .operators import (
     EL_OT_commit_mask,
     EL_OT_add_modifier,
     EL_OT_remove_modifier,
+    EL_OT_reset_modifier_base_id,
 )
 from .stack import (
     _active_branch_has_data_obj,
@@ -334,6 +335,7 @@ class EL_UL_layers(bpy.types.UIList):
             sub_row = sub_colum.row()
             sub_row.operator(EL_OT_add_modifier.bl_idname, icon="MODIFIER_DATA").uid = item.uid
             if has_mods:
+                sub_row.operator(EL_OT_reset_modifier_base_id.bl_idname, icon="PRESET").uid = item.uid
                 sub_row.operator(EL_OT_remove_modifier.bl_idname, icon="X").uid = item.uid
                 sub_colum.template_list("EL_UL_layer_mods", "", item, "modifiers", item, "selected_mod", rows=2)
 

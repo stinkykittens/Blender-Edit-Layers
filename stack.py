@@ -141,7 +141,8 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
                 bpy.context.collection.objects.link(tmp)
                 for lmod in layer.modifiers:
                     orig_mod = lmod.get_mod()
-                    print(orig_mod.name)
+                    if orig_mod == None:
+                        continue
                     new_mod = tmp.modifiers.new(orig_mod.name, orig_mod.type)
                     for prop in orig_mod.bl_rna.properties:
                         if not prop.is_readonly:
@@ -162,7 +163,9 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
                 idl = _ensure_id_layer(bm)
                 # Assign IDs to new vertices created through modifiers
                 if len(mesh.vertices) < len(bm.verts):
-                    next_id = max((v[idl] for v in bm.verts), default=0) + 1
+                    if layer.mod_id == -1:
+                        layer.mod_id = max((v[idl] for v in bm.verts), default=0) + 1
+                    next_id = layer.mod_id
                     ids = []
                     for v in bm.verts:
                         if v[idl] == 0 or v[idl] in ids:
@@ -170,7 +173,7 @@ def _rebuild_mesh(stack, path, base_mesh: types.Mesh, mesh: types.Mesh, respect_
                             next_id += 1
                         else:
                             ids.append(v[idl])
-
+                
         if stack.shade_smooth:
             for f in bm.faces:
                 f.smooth = True
